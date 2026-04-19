@@ -46,3 +46,8 @@
 ✅ Terminé
 ⏳ Attente de 10 seconde avant exécution des commandes Git...
 📦 Ajout du fichier
+📝 Commit
+[main 92579f1] ajout des planification
+ 1 file changed, 46 insertions(+)
+🚀 Push vers origin main
+✅ Terminé

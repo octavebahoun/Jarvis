@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend — Jarvis-like
 
-## Getting Started
+Frontend du projet **Double Numérique Intelligent** construit avec **Next.js** (App Router).
 
-First, run the development server:
+## Objectif
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Fournir l’interface utilisateur pour :
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- dialoguer avec l’agent,
+- visualiser les réponses et le contexte,
+- évoluer vers un dashboard (phases suivantes).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## État actuel (index du projet)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Le frontend est actuellement au stade **template Next.js** :
 
-## Learn More
+- page d’accueil par défaut dans `app/page.tsx`,
+- layout global et styles de base en place,
+- dépendances UI déjà installées dans `package.json` (Framer Motion, Lucide, Three.js),
+- structure prête pour accueillir des composants métier.
 
-To learn more about Next.js, take a look at the following resources:
+## Stack frontend
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS v4
+- ESLint
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts disponibles
 
-## Deploy on Vercel
+- `npm run dev` : lancement en développement (port 3000)
+- `npm run build` : build de production
+- `npm run start` : démarrage en mode production
+- `npm run lint` : vérification lint
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Lancement rapide
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Installer les dépendances :
+   - `npm install`
+2. Démarrer l’application :
+   - `npm run dev`
+3. Ouvrir :
+   - `http://localhost:3000`
+
+## Connexion au backend
+
+Le backend FastAPI est prévu sur le port `8080` (via Docker Compose à la racine).
+
+Recommandation :
+
+- centraliser les appels API dans un module dédié (ex: `lib/api.ts`),
+- utiliser des variables d’environnement (`NEXT_PUBLIC_API_URL`) pour l’URL du backend.
+
+## Priorités de développement frontend
+
+1. Remplacer la page template par une interface de chat.
+2. Créer les composants principaux (`ChatWindow`, `InputBar`, `MessageItem`).
+3. Ajouter un client API typé pour `POST /chat`, `GET/POST /memory`, `GET/PUT /profile`.
+4. Gérer les états UX (loading, erreurs, reconnect, historique).
+5. Préparer un dashboard progressif pour la phase 3.
+
+## Notes
+
+- Les fichiers [AGENTS.md](AGENTS.md) et [CLAUDE.md](CLAUDE.md) contiennent des consignes de contexte pour assistants/outils.
+- Le README racine n’a pas été modifié, conformément à la consigne.
