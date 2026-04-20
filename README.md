@@ -1,4 +1,4 @@
-# 🧠 Double Numérique Intelligent (Jarvis-like)
+# 🧠 Double Numérique Intelligent (Jarvis)
 
 ## 🎯 Vision
 
