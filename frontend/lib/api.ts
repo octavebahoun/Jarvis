@@ -48,6 +48,17 @@ export function getProfile() {
   return request<ProfileResponse>("/profile");
 }
 
+export interface FactItem {
+  id: string;
+  content: string;
+  created_at: string;
+}
+
+export async function getLongTermMemory(): Promise<FactItem[]> {
+  const { items } = await request<{ items: FactItem[] }>("/memory?type=long_term");
+  return items;
+}
+
 interface ShortTermItem {
   role: "user" | "assistant";
   content: string;

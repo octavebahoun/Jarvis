@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import ChatWindow from "@/components/ChatWindow";
 import InputBar from "@/components/InputBar";
+import MemoryPanel from "@/components/MemoryPanel";
 import { ApiError, getShortTermHistory, streamChatMessage, type ChatMessage } from "@/lib/api";
 
 const SESSION_STORAGE_KEY = "jarvis:session_id";
@@ -35,6 +36,7 @@ export default function ChatPage() {
   const [isSending, setIsSending] = useState(false);
   const [streamingReply, setStreamingReply] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
 
   // La session est résolue côté client uniquement (localStorage n'existe pas
   // pendant le rendu serveur), d'où l'aller via useEffect plutôt qu'un état initial.
@@ -103,13 +105,23 @@ export default function ChatPage() {
             ← Retour
           </Link>
           <span className="text-sm tracking-wide text-zinc-300">JARVIS · Chat</span>
-          <button
-            onClick={startNewConversation}
-            className="text-sm text-zinc-400 hover:text-zinc-200"
-          >
-            Nouvelle conversation
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsMemoryPanelOpen((open) => !open)}
+              className="text-sm text-zinc-400 hover:text-zinc-200"
+            >
+              Profil & mémoire
+            </button>
+            <button
+              onClick={startNewConversation}
+              className="text-sm text-zinc-400 hover:text-zinc-200"
+            >
+              Nouvelle conversation
+            </button>
+          </div>
         </header>
+
+        {isMemoryPanelOpen && <MemoryPanel />}
 
         {isLoadingHistory ? (
           <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
