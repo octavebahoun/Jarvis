@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.session import Base
@@ -52,3 +52,42 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     user: Mapped[User] = relationship(back_populates="messages")
+
+
+class Plan(Base):
+    """Phase 2 : un plan d'action proposé par le planner, à valider avant exécution."""
+
+    __tablename__ = "plans"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    session_id: Mapped[str] = mapped_column(String, index=True)
+    goal: Mapped[str] = mapped_column(Text)
+    # pending (en attente de validation) -> approved -> running -> done | failed
+    status: Mapped[str] = mapped_column(String, default="pending")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    steps: Mapped[list["PlanStep"]] = relationship(
+        back_populates="plan",
+        cascade="all, delete-orphan",
+        order_by="PlanStep.step_order",
+    )
+
+
+class PlanStep(Base):
+    """Une étape d'un plan : un appel de tool précis, avec son statut d'exécution."""
+
+    __tablename__ = "plan_steps"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    plan_id: Mapped[str] = mapped_column(ForeignKey("plans.id"), index=True)
+    step_order: Mapped[int] = mapped_column(Integer)
+    tool: Mapped[str] = mapped_column(String)
+    description: Mapped[str] = mapped_column(Text)
+    args: Mapped[dict] = mapped_column(JSON, default=dict)
+    # pending -> running -> done | failed
+    status: Mapped[str] = mapped_column(String, default="pending")
+    result: Mapped[str | None] = mapped_column(Text, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    plan: Mapped[Plan] = relationship(back_populates="steps")
