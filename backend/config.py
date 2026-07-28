@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     browser_automation_memory_limit: str = "512m"
     browser_automation_cpu_limit: float = 1.0
 
+    # Phase 2 — queue Celery : DB Redis dédiées (séparées de celle utilisée
+    # par la mémoire court terme) pour ne rien mélanger avec short_term.py.
+    celery_broker_url: str = "redis://localhost:6379/1"
+    celery_result_backend: str = "redis://localhost:6379/2"
+
 
 @lru_cache
 def get_settings() -> Settings:

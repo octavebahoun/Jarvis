@@ -20,6 +20,9 @@ def client(monkeypatch):
     monkeypatch.setattr(controller.reasoning, "stream_reply", lambda messages: iter(["Réponse ", "de test."]))
     monkeypatch.setattr(controller.vector_store, "search_memory", lambda *args, **kwargs: [])
     monkeypatch.setattr(controller.vector_store, "add_memory", lambda *args, **kwargs: None)
+    # Par défaut : le planner ne propose aucun plan (comportement chat simple).
+    # Les tests Phase 2 qui veulent un plan surchargent ceci explicitement.
+    monkeypatch.setattr(controller.planner, "build_plan", lambda goal: controller.planner.ProposedPlan(steps=[]))
 
     with TestClient(app) as test_client:
         yield test_client

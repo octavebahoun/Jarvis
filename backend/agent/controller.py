@@ -4,11 +4,12 @@ from collections.abc import Iterator
 
 from sqlalchemy.orm import Session
 
-from agent import reasoning
-from db.models import Message
+from agent import planner, reasoning
+from db.models import Message, Plan, User
 from db.session import SessionLocal
 from identity.profile import get_or_create_user
 from memory import short_term, vector_store
+from tasks import task_store
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,10 @@ logger = logging.getLogger(__name__)
 # entêtes HTTP (200) sont déjà envoyés à ce stade, on ne peut plus renvoyer un
 # vrai code d'erreur, donc l'échec est signalé dans le flux lui-même.
 STREAM_ERROR_MARKER = "\n\n<<JARVIS_STREAM_ERROR>>"
+
+# Phase 2 : un plan proposé est signalé dans le flux par ce marqueur suivi de
+# l'id du plan (le frontend va chercher les détails via GET /tasks/:id).
+PLAN_MARKER = "\n\n<<JARVIS_PLAN>>"
 
 
 class AgentUnavailableError(RuntimeError):
@@ -39,6 +44,64 @@ def _safe_add_memory(memory_id: str, text: str, metadata: dict) -> None:
         vector_store.add_memory(memory_id=memory_id, text=text, metadata=metadata)
     except Exception:
         logger.exception("Échec de l'indexation du souvenir dans la mémoire vectorielle (ignoré).")
+
+
+def _maybe_create_plan(db: Session, user: User, session_id: str, user_message: str) -> Plan | None:
+    """Demande au planner si `user_message` nécessite des tools. Si oui,
+    persiste le plan (statut "pending", en attente de validation humaine) et
+    le retourne. Si le planner échoue ou ne propose aucune étape, retourne
+    None : l'appelant doit alors retomber sur le chat simple (Phase 1)."""
+    try:
+        proposed = planner.build_plan(user_message)
+    except Exception:
+        logger.exception("Échec du planner, retour au chat simple.")
+        return None
+
+    if not proposed.steps:
+        return None
+
+    return task_store.create_plan(
+        db,
+        user_id=user.id,
+        session_id=session_id,
+        goal=user_message,
+        steps=[{"tool": step.tool, "description": step.description, "args": step.args} for step in proposed.steps],
+    )
+
+
+def handle_chat_or_plan(db: Session, session_id: str, user_message: str, user_id: str | None = None) -> dict:
+    """Point d'entrée Phase 2 pour /chat : décide d'abord si un plan d'action
+    est nécessaire. Si oui, le persiste et le renvoie (en attente
+    d'approbation) sans appeler le LLM de chat. Sinon, comportement Phase 1
+    inchangé via handle_chat()."""
+    user = get_or_create_user(db, user_id)
+
+    plan = _maybe_create_plan(db, user, session_id, user_message)
+    if plan is not None:
+        short_term.append_message(session_id, "user", user_message)
+        return {"type": "plan", "plan": plan}
+
+    reply = handle_chat(db, session_id=session_id, user_message=user_message, user_id=user_id)
+    return {"type": "reply", "reply": reply}
+
+
+def stream_chat_or_plan(session_id: str, user_message: str, user_id: str | None = None) -> Iterator[str]:
+    """Équivalent streaming de handle_chat_or_plan. Si un plan est nécessaire,
+    yield un unique chunk (marqueur + id du plan) et s'arrête — sinon délègue
+    entièrement à stream_chat(), inchangé."""
+    db = SessionLocal()
+    try:
+        user = get_or_create_user(db, user_id)
+        plan = _maybe_create_plan(db, user, session_id, user_message)
+
+        if plan is not None:
+            short_term.append_message(session_id, "user", user_message)
+            yield f"{PLAN_MARKER}{plan.id}"
+            return
+    finally:
+        db.close()
+
+    yield from stream_chat(session_id, user_message, user_id)
 
 
 def handle_chat(db: Session, session_id: str, user_message: str, user_id: str | None = None) -> str:

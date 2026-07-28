@@ -38,6 +38,19 @@ services:
       # pas d'un vrai Docker-in-Docker imbriqué.
       - /var/run/docker.sock:/var/run/docker.sock
 
+  worker:
+    build: ./backend
+    command: celery -A tasks.worker.celery_app worker --loglevel=info
+    env_file: .env
+    depends_on:
+      - postgres
+      - redis
+      - chroma
+    volumes:
+      # Même besoin que le backend : exécute les tools sandboxés (code_executor,
+      # browser_automation) via le socket Docker de l'hôte.
+      - /var/run/docker.sock:/var/run/docker.sock
+
 volumes:
   postgres_data:
   chroma_data:
