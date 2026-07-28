@@ -31,6 +31,12 @@ services:
       - postgres
       - redis
       - chroma
+    volumes:
+      # Phase 2 : les tools code_executor / browser_automation lancent des
+      # containers Docker "frères" (sandbox jetable) depuis le backend. Le
+      # backend a donc besoin du socket Docker de l'hôte (docker-out-of-docker),
+      # pas d'un vrai Docker-in-Docker imbriqué.
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   postgres_data:

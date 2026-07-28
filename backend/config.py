@@ -42,6 +42,19 @@ class Settings(BaseSettings):
     # Phase 2 — tool web_search : clé API Tavily (gratuite, tavily.com).
     tavily_api_key: str = ""
 
+    # Phase 2 — tool code_executor : container jetable, réseau désactivé.
+    code_executor_image: str = "python:3.11-slim"
+    code_executor_timeout_seconds: int = 10
+    code_executor_memory_limit: str = "256m"
+    code_executor_cpu_limit: float = 0.5
+
+    # Phase 2 — tool browser_automation (Playwright) : container jetable,
+    # réseau activé (nécessaire pour atteindre de vrais sites).
+    browser_automation_image: str = "mcr.microsoft.com/playwright/python:v1.49.0-noble"
+    browser_automation_timeout_seconds: int = 30
+    browser_automation_memory_limit: str = "512m"
+    browser_automation_cpu_limit: float = 1.0
+
 
 @lru_cache
 def get_settings() -> Settings:

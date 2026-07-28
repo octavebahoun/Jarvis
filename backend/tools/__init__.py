@@ -20,12 +20,16 @@ class ToolNotFoundError(KeyError):
 # Import après la définition de BaseTool : chaque module de tool fait
 # `from tools import BaseTool`, ce qui créerait un import circulaire si ces
 # imports arrivaient avant que BaseTool existe sur le module `tools`.
+from tools.browser_automation import BrowserAutomationTool  # noqa: E402
+from tools.code_executor import CodeExecutorTool  # noqa: E402
 from tools.file_reader import FileReaderTool  # noqa: E402
 from tools.web_search import WebSearchTool  # noqa: E402
 
 _TOOLS: list[BaseTool] = [
     FileReaderTool(),
     WebSearchTool(),
+    CodeExecutorTool(),
+    BrowserAutomationTool(),
 ]
 
 _REGISTRY: dict[str, BaseTool] = {tool.name: tool for tool in _TOOLS}
