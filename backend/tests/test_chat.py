@@ -27,3 +27,22 @@ def test_chat_keeps_history_across_messages_in_same_session(client, session_id):
     response = client.get("/memory", params={"type": "short_term", "session_id": session_id})
 
     assert len(response.json()["items"]) == 4
+
+
+def test_chat_rejects_empty_message(client, session_id):
+    response = client.post("/chat", json={"message": "", "session_id": session_id})
+
+    assert response.status_code == 422
+
+
+def test_chat_returns_502_when_llm_unavailable(client, session_id, monkeypatch):
+    from agent import controller
+
+    def _boom(messages):
+        raise RuntimeError("clé API OpenAI invalide")
+
+    monkeypatch.setattr(controller.reasoning, "generate_reply", _boom)
+
+    response = client.post("/chat", json={"message": "Salut", "session_id": session_id})
+
+    assert response.status_code == 502
