@@ -22,12 +22,31 @@ class AgentUnavailableError(RuntimeError):
     """Le LLM n'a pas pu répondre (clé API absente/invalide, service indisponible, etc.)."""
 
 
+def _safe_search_memory(user_message: str, user_id: str) -> list[str]:
+    """La mémoire vectorielle est un enrichissement, pas une dépendance critique :
+    si Chroma ou l'embedder échoue (ex. téléchargement du modèle local qui
+    time-out sur un réseau lent), le chat continue sans contexte RAG plutôt
+    que de planter toute la requête."""
+    try:
+        return vector_store.search_memory(user_message, user_id=user_id)
+    except Exception:
+        logger.exception("Recherche mémoire vectorielle indisponible, poursuite sans contexte RAG.")
+        return []
+
+
+def _safe_add_memory(memory_id: str, text: str, metadata: dict) -> None:
+    try:
+        vector_store.add_memory(memory_id=memory_id, text=text, metadata=metadata)
+    except Exception:
+        logger.exception("Échec de l'indexation du souvenir dans la mémoire vectorielle (ignoré).")
+
+
 def handle_chat(db: Session, session_id: str, user_message: str, user_id: str | None = None) -> str:
     """Point d'entrée unique de l'agent : charge le contexte, raisonne, sauvegarde la mémoire."""
     user = get_or_create_user(db, user_id)
 
     history = short_term.get_history(session_id)
-    relevant_memories = vector_store.search_memory(user_message, user_id=user.id)
+    relevant_memories = _safe_search_memory(user_message, user_id=user.id)
 
     messages = reasoning.build_messages(user, history, relevant_memories, user_message)
 
@@ -48,7 +67,7 @@ def handle_chat(db: Session, session_id: str, user_message: str, user_id: str | 
     )
     db.commit()
 
-    vector_store.add_memory(
+    _safe_add_memory(
         memory_id=str(uuid.uuid4()),
         text=f"Utilisateur: {user_message}\nJarvis: {reply}",
         metadata={"user_id": user.id, "session_id": session_id},
@@ -69,7 +88,7 @@ def stream_chat(session_id: str, user_message: str, user_id: str | None = None) 
     try:
         user = get_or_create_user(db, user_id)
         history = short_term.get_history(session_id)
-        relevant_memories = vector_store.search_memory(user_message, user_id=user.id)
+        relevant_memories = _safe_search_memory(user_message, user_id=user.id)
         messages = reasoning.build_messages(user, history, relevant_memories, user_message)
 
         reply_parts: list[str] = []
@@ -95,7 +114,7 @@ def stream_chat(session_id: str, user_message: str, user_id: str | None = None) 
         )
         db.commit()
 
-        vector_store.add_memory(
+        _safe_add_memory(
             memory_id=str(uuid.uuid4()),
             text=f"Utilisateur: {user_message}\nJarvis: {reply}",
             metadata={"user_id": user.id, "session_id": session_id},

@@ -47,3 +47,31 @@ def test_chat_returns_502_when_llm_unavailable(client, session_id, monkeypatch):
     response = client.post("/chat", json={"message": "Salut", "session_id": session_id})
 
     assert response.status_code == 502
+
+
+def test_chat_degrades_gracefully_when_vector_search_fails(client, session_id, monkeypatch):
+    from agent import controller
+
+    def _boom(query, user_id, n_results=5):
+        raise TimeoutError("téléchargement du modèle d'embedding local expiré")
+
+    monkeypatch.setattr(controller.vector_store, "search_memory", _boom)
+
+    response = client.post("/chat", json={"message": "Salut", "session_id": session_id})
+
+    assert response.status_code == 200
+    assert response.json()["reply"] == "Réponse de test."
+
+
+def test_chat_degrades_gracefully_when_vector_add_fails(client, session_id, monkeypatch):
+    from agent import controller
+
+    def _boom(memory_id, text, metadata):
+        raise TimeoutError("téléchargement du modèle d'embedding local expiré")
+
+    monkeypatch.setattr(controller.vector_store, "add_memory", _boom)
+
+    response = client.post("/chat", json={"message": "Salut", "session_id": session_id})
+
+    assert response.status_code == 200
+    assert response.json()["reply"] == "Réponse de test."
