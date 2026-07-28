@@ -1,3 +1,5 @@
+from collections.abc import Iterator
+
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
@@ -41,3 +43,11 @@ def generate_reply(messages: list[BaseMessage]) -> str:
     llm = ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
     response = llm.invoke(messages)
     return str(response.content)
+
+
+def stream_reply(messages: list[BaseMessage]) -> Iterator[str]:
+    """Variante streaming : yield la réponse au fur et à mesure qu'elle est générée."""
+    llm = ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
+    for chunk in llm.stream(messages):
+        if chunk.content:
+            yield str(chunk.content)

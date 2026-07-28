@@ -16,18 +16,22 @@ function ThinkingBubble() {
 
 export default function ChatWindow({
   messages,
-  isThinking = false,
+  streamingReply = "",
+  isSending = false,
 }: {
   messages: ChatMessage[];
-  isThinking?: boolean;
+  streamingReply?: string;
+  isSending?: boolean;
 }) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const showThinking = isSending && streamingReply.length === 0;
+  const showStreaming = streamingReply.length > 0;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isThinking]);
+  }, [messages, showThinking, showStreaming]);
 
-  if (messages.length === 0 && !isThinking) {
+  if (messages.length === 0 && !showThinking && !showStreaming) {
     return (
       <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
         Dis bonjour à Jarvis pour démarrer la conversation.
@@ -49,7 +53,12 @@ export default function ChatWindow({
           {message.content}
         </div>
       ))}
-      {isThinking && <ThinkingBubble />}
+      {showStreaming && (
+        <div className="max-w-[80%] self-start rounded-2xl border border-zinc-700/70 bg-zinc-900/70 px-4 py-2.5 text-sm leading-relaxed text-zinc-100">
+          {streamingReply}
+        </div>
+      )}
+      {showThinking && <ThinkingBubble />}
       <div ref={bottomRef} />
     </div>
   );

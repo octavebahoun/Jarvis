@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import ChatWindow from "@/components/ChatWindow";
 import InputBar from "@/components/InputBar";
-import { getShortTermHistory, sendChatMessage, type ChatMessage } from "@/lib/api";
+import { getShortTermHistory, streamChatMessage, type ChatMessage } from "@/lib/api";
 
 const SESSION_STORAGE_KEY = "jarvis:session_id";
 
@@ -23,6 +23,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [streamingReply, setStreamingReply] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // La session est résolue côté client uniquement (localStorage n'existe pas
@@ -65,14 +66,22 @@ export default function ChatPage() {
     setError(null);
     setMessages((prev) => [...prev, { role: "user", content: message, ts: Date.now() }]);
     setIsSending(true);
+    setStreamingReply("");
 
     try {
-      const { reply } = await sendChatMessage(message, sessionId);
-      setMessages((prev) => [...prev, { role: "assistant", content: reply, ts: Date.now() }]);
+      const { reply, failed } = await streamChatMessage(message, sessionId, setStreamingReply);
+
+      if (reply) {
+        setMessages((prev) => [...prev, { role: "assistant", content: reply, ts: Date.now() }]);
+      }
+      if (failed) {
+        setError("Le LLM a rencontré une erreur pendant la génération de la réponse.");
+      }
     } catch {
       setError("Jarvis est indisponible. Vérifie que le backend tourne bien.");
     } finally {
       setIsSending(false);
+      setStreamingReply("");
     }
   }
 
@@ -97,7 +106,7 @@ export default function ChatPage() {
             Chargement de la conversation...
           </div>
         ) : (
-          <ChatWindow messages={messages} isThinking={isSending} />
+          <ChatWindow messages={messages} streamingReply={streamingReply} isSending={isSending} />
         )}
 
         {error && <p className="mb-2 text-sm text-red-400">{error}</p>}

@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from agent.controller import AgentUnavailableError, handle_chat
+from agent.controller import AgentUnavailableError, handle_chat, stream_chat
 from api.deps import get_db
 
 router = APIRouter()
@@ -26,3 +27,13 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)) -> ChatResponse:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return ChatResponse(reply=reply, session_id=payload.session_id)
+
+
+@router.post("/chat/stream")
+def chat_stream(payload: ChatRequest) -> StreamingResponse:
+    """Comme /chat, mais renvoie la réponse en flux (texte brut) au fur et à
+    mesure de sa génération, plutôt que d'attendre la réponse complète."""
+    return StreamingResponse(
+        stream_chat(session_id=payload.session_id, user_message=payload.message),
+        media_type="text/plain",
+    )
