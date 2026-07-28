@@ -1,3 +1,4 @@
+import logging
 import uuid
 from collections.abc import Iterator
 
@@ -8,6 +9,8 @@ from db.models import Message
 from db.session import SessionLocal
 from identity.profile import get_or_create_user
 from memory import short_term, vector_store
+
+logger = logging.getLogger(__name__)
 
 # Marqueur de fin de flux en cas d'échec du LLM en cours de streaming : les
 # entêtes HTTP (200) sont déjà envoyés à ce stade, on ne peut plus renvoyer un
@@ -31,6 +34,7 @@ def handle_chat(db: Session, session_id: str, user_message: str, user_id: str | 
     try:
         reply = reasoning.generate_reply(messages)
     except Exception as exc:
+        logger.exception("Échec de l'appel LLM (chat_provider=%s)", reasoning.settings.chat_provider)
         raise AgentUnavailableError("Le LLM n'a pas pu générer de réponse.") from exc
 
     short_term.append_message(session_id, "user", user_message)
@@ -74,6 +78,7 @@ def stream_chat(session_id: str, user_message: str, user_id: str | None = None) 
                 reply_parts.append(chunk)
                 yield chunk
         except Exception:
+            logger.exception("Échec de l'appel LLM en streaming (chat_provider=%s)", reasoning.settings.chat_provider)
             yield STREAM_ERROR_MARKER
             return
 
