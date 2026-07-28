@@ -26,6 +26,7 @@ Transformer le chat intelligent (Phase 1) en **agent semi-autonome contrôlé**.
 | Sandbox Python | subprocess / Docker exec | Exécution sécurisée de code |
 | File system | pathlib + watchdog | Lecture/écriture fichiers |
 | Web search | Serper API / Tavily | Recherche web |
+| Navigateur automatisé | Playwright | Naviguer, cliquer, remplir des formulaires, extraire du contenu dynamique, captures d'écran |
 | Queue de tâches | Redis + Celery | Exécution async des plans |
 | Websocket | FastAPI WebSocket | Feedback temps réel à l'UI |
 
@@ -49,7 +50,8 @@ jarvis/
 │   │   ├── __init__.py          # 🆕 Registre des tools disponibles
 │   │   ├── file_reader.py       # 🆕 Lire des fichiers locaux
 │   │   ├── code_executor.py     # 🆕 Exécuter du code Python en sandbox
-│   │   └── web_search.py        # 🆕 Recherche web via API
+│   │   ├── web_search.py        # 🆕 Recherche web via API
+│   │   └── browser_automation.py # 🆕 Playwright : navigation, clics, formulaires, captures
 │   │
 │   ├── tasks/
 │   │   ├── worker.py            # 🆕 Worker Celery
@@ -119,6 +121,12 @@ class BaseTool:
 | Lecture fichier | `file_reader.py` | Non |
 | Exécution code | `code_executor.py` | **Oui** |
 | Recherche web | `web_search.py` | Non |
+| Navigateur (Playwright) | `browser_automation.py` | **Oui** |
+
+> Le tool Playwright suit le même régime que `code_executor` : sandboxé
+> (container Docker dédié) et validation humaine obligatoire avant exécution
+> — naviguer/soumettre des formulaires sur un vrai site a de vraies
+> conséquences, contrairement à une simple recherche web en lecture seule.
 
 ### Ajouter un tool
 
@@ -172,6 +180,7 @@ Stream temps réel de l'avancement du plan vers le frontend.
 ## 🔐 Sécurité — Règles Phase 2
 
 - **Tout code exécuté tourne dans un container Docker isolé** — jamais sur le host directement
+- **Playwright tourne aussi dans un container Docker dédié** (même logique que le code) — jamais de navigateur lancé directement sur le host
 - L'accès fichiers est limité à un répertoire sandbox défini dans `.env` (`SANDBOX_PATH`)
 - Chaque tool marqué `requires_validation: True` **ne s'exécute pas** sans confirmation explicite de l'utilisateur
 - Les résultats d'exécution de code sont tronqués à 10 000 caractères avant d'être envoyés au LLM
