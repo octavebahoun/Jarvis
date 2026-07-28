@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 
+import PlanViewer from "@/components/PlanViewer";
 import type { ChatMessage } from "@/lib/api";
 
 function ThinkingBubble() {
@@ -46,26 +47,35 @@ export default function ChatWindow({
 
   return (
     <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-1 py-4">
-      {messages.map((message, index) => (
-        <div key={index} className={`flex max-w-[80%] flex-col ${message.role === "user" ? "self-end items-end" : "self-start items-start"}`}>
+      {messages.map((message, index) => {
+        if (message.role === "plan") {
+          return <PlanViewer key={index} planId={message.planId} />;
+        }
+
+        return (
           <div
-            className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              message.role === "user"
-                ? "bg-cyan-400 text-zinc-950"
-                : "border border-zinc-700/70 bg-zinc-900/70 text-zinc-100"
-            }`}
+            key={index}
+            className={`flex max-w-[80%] flex-col ${message.role === "user" ? "self-end items-end" : "self-start items-start"}`}
           >
-            {message.role === "assistant" ? (
-              <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-p:first:mt-0 prose-p:last:mb-0">
-                <ReactMarkdown>{message.content}</ReactMarkdown>
-              </div>
-            ) : (
-              message.content
-            )}
+            <div
+              className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                message.role === "user"
+                  ? "bg-cyan-400 text-zinc-950"
+                  : "border border-zinc-700/70 bg-zinc-900/70 text-zinc-100"
+              }`}
+            >
+              {message.role === "assistant" ? (
+                <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-p:first:mt-0 prose-p:last:mb-0">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
+              ) : (
+                message.content
+              )}
+            </div>
+            <span className="mt-1 px-1 text-xs text-zinc-500">{formatTime(message.ts)}</span>
           </div>
-          <span className="mt-1 px-1 text-xs text-zinc-500">{formatTime(message.ts)}</span>
-        </div>
-      ))}
+        );
+      })}
       {showStreaming && (
         <div className="max-w-[80%] self-start rounded-2xl border border-zinc-700/70 bg-zinc-900/70 px-4 py-2.5 text-sm leading-relaxed text-zinc-100">
           <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-p:first:mt-0 prose-p:last:mb-0">

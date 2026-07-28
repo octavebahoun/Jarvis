@@ -1,10 +1,8 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-  ts: number;
-}
+export type ChatMessage =
+  | { role: "user" | "assistant"; content: string; ts: number }
+  | { role: "plan"; planId: string; ts: number };
 
 /** Erreur HTTP renvoyée par l'API Jarvis (par opposition à une erreur réseau :
  * backend injoignable, qui lève une TypeError native de `fetch`, pas une ApiError). */
@@ -79,12 +77,18 @@ export async function getShortTermHistory(sessionId: string): Promise<ChatMessag
 
 // Doit rester identique à agent.controller.STREAM_ERROR_MARKER côté backend.
 const STREAM_ERROR_MARKER = "\n\n<<JARVIS_STREAM_ERROR>>";
+// Doit rester identique à agent.controller.PLAN_MARKER côté backend.
+const PLAN_MARKER = "\n\n<<JARVIS_PLAN>>";
+
+export type ChatStreamResult =
+  | { type: "reply"; reply: string; failed: boolean }
+  | { type: "plan"; planId: string };
 
 export async function streamChatMessage(
   message: string,
   sessionId: string,
   onChunk: (textSoFar: string) => void,
-): Promise<{ reply: string; failed: boolean }> {
+): Promise<ChatStreamResult> {
   const res = await fetch(`${API_URL}/chat/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -104,9 +108,46 @@ export async function streamChatMessage(
     if (done) break;
 
     accumulated += decoder.decode(value, { stream: true });
-    onChunk(accumulated.replace(STREAM_ERROR_MARKER, ""));
+    // Un plan tient dans un unique chunk : tant qu'on ne sait pas encore ce
+    // que c'est, mieux vaut ne rien afficher que de flasher le marqueur brut.
+    if (!accumulated.startsWith(PLAN_MARKER)) {
+      onChunk(accumulated.replace(STREAM_ERROR_MARKER, ""));
+    }
+  }
+
+  if (accumulated.startsWith(PLAN_MARKER)) {
+    return { type: "plan", planId: accumulated.slice(PLAN_MARKER.length).trim() };
   }
 
   const failed = accumulated.includes(STREAM_ERROR_MARKER);
-  return { reply: accumulated.replace(STREAM_ERROR_MARKER, "").trim(), failed };
+  return { type: "reply", reply: accumulated.replace(STREAM_ERROR_MARKER, "").trim(), failed };
+}
+
+export interface PlanStepResponse {
+  id: string;
+  tool: string;
+  description: string;
+  status: string;
+  result: string | null;
+  error: string | null;
+}
+
+export interface PlanResponse {
+  id: string;
+  session_id: string;
+  goal: string;
+  status: string;
+  steps: PlanStepResponse[];
+}
+
+export function getTask(planId: string) {
+  return request<PlanResponse>(`/tasks/${encodeURIComponent(planId)}`);
+}
+
+export function approveTask(planId: string) {
+  return request<PlanResponse>(`/tasks/${encodeURIComponent(planId)}/approve`, { method: "POST" });
+}
+
+export function getTaskWebSocketUrl(planId: string): string {
+  return `${API_URL.replace(/^http/, "ws")}/ws/tasks/${encodeURIComponent(planId)}`;
 }

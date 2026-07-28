@@ -83,13 +83,17 @@ export default function ChatPage() {
     setStreamingReply("");
 
     try {
-      const { reply, failed } = await streamChatMessage(message, sessionId, setStreamingReply);
+      const result = await streamChatMessage(message, sessionId, setStreamingReply);
 
-      if (reply) {
-        setMessages((prev) => [...prev, { role: "assistant", content: reply, ts: Date.now() }]);
-      }
-      if (failed) {
-        setError("Le LLM a rencontré une erreur pendant la génération de la réponse.");
+      if (result.type === "plan") {
+        setMessages((prev) => [...prev, { role: "plan", planId: result.planId, ts: Date.now() }]);
+      } else {
+        if (result.reply) {
+          setMessages((prev) => [...prev, { role: "assistant", content: result.reply, ts: Date.now() }]);
+        }
+        if (result.failed) {
+          setError("Le LLM a rencontré une erreur pendant la génération de la réponse.");
+        }
       }
     } catch (err) {
       setError(describeSendError(err));
