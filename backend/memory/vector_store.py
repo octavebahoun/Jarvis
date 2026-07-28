@@ -1,22 +1,48 @@
 from functools import lru_cache
 
 import chromadb
-from langchain_openai import OpenAIEmbeddings
 
 from config import get_settings
 
 settings = get_settings()
 
 
+class LocalEmbeddings:
+    """Embeddings locaux : modèle MiniLM (ONNX) déjà embarqué par ChromaDB.
+
+    Tourne sur CPU, aucune clé API ni appel réseau après le premier
+    téléchargement du modèle (mis en cache par Chroma)."""
+
+    def __init__(self) -> None:
+        from chromadb.utils import embedding_functions
+
+        self._fn = embedding_functions.DefaultEmbeddingFunction()
+
+    def embed_query(self, text: str) -> list[float]:
+        return [float(value) for value in self._fn([text])[0]]
+
+
+@lru_cache
+def get_embedder():
+    if settings.embedding_provider == "local":
+        return LocalEmbeddings()
+
+    from langchain_openai import OpenAIEmbeddings
+
+    return OpenAIEmbeddings(model=settings.openai_embedding_model, api_key=settings.openai_api_key)
+
+
+def _collection_name() -> str:
+    # Les deux providers produisent des vecteurs de dimensions différentes
+    # (1536 pour OpenAI, 384 pour MiniLM) : une collection par provider évite
+    # une erreur de dimension si on bascule l'un pour l'autre via l'env.
+    return f"{settings.chroma_collection}_{settings.embedding_provider}"
+
+
 @lru_cache
 def get_collection():
     client = chromadb.HttpClient(host=settings.chroma_host, port=settings.chroma_port)
-    return client.get_or_create_collection(settings.chroma_collection)
-
-
-@lru_cache
-def get_embedder() -> OpenAIEmbeddings:
-    return OpenAIEmbeddings(model="text-embedding-3-small", api_key=settings.openai_api_key)
+    return client.get_or_create_collection(_collection_name(), metadata={"hnsw:space": "cosine"})
 
 
 def add_memory(memory_id: str, text: str, metadata: dict) -> None:

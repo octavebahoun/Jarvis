@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     chroma_port: int = 8000
     chroma_collection: str = "jarvis_memory"
 
+    # "openai" (API payante, text-embedding-3-small) ou "local" (ONNX MiniLM
+    # embarqué dans ChromaDB, gratuit, tourne sur CPU sans clé API).
+    embedding_provider: str = "openai"
+    openai_embedding_model: str = "text-embedding-3-small"
+
     secret_key: str = "change-this-in-production"
 
     default_user_id: str = "default"
