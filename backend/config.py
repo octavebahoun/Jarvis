@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # tools fichiers) sont strictement limités. Jamais d'accès hors de ce dossier.
     sandbox_path: str = "./sandbox"
 
+    # Phase 2 — tool web_search : clé API Tavily (gratuite, tavily.com).
+    tavily_api_key: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:
