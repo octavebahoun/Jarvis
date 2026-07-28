@@ -11,6 +11,12 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
 
+    # "openai" (payant, GPT-4o) ou "openrouter" (modèles gratuits ":free").
+    chat_provider: str = "openai"
+    openrouter_api_key: str = ""
+    openrouter_model: str = "meta-llama/llama-3.1-8b-instruct:free"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+
     database_url: str = "postgresql://jarvis:jarvis@localhost:5432/jarvis"
 
     redis_url: str = "redis://localhost:6379"

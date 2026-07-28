@@ -39,15 +39,24 @@ def build_messages(
     return messages
 
 
+def _get_llm() -> ChatOpenAI:
+    if settings.chat_provider == "openrouter":
+        return ChatOpenAI(
+            model=settings.openrouter_model,
+            api_key=settings.openrouter_api_key,
+            base_url=settings.openrouter_base_url,
+        )
+
+    return ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
+
+
 def generate_reply(messages: list[BaseMessage]) -> str:
-    llm = ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
-    response = llm.invoke(messages)
+    response = _get_llm().invoke(messages)
     return str(response.content)
 
 
 def stream_reply(messages: list[BaseMessage]) -> Iterator[str]:
     """Variante streaming : yield la réponse au fur et à mesure qu'elle est générée."""
-    llm = ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
-    for chunk in llm.stream(messages):
+    for chunk in _get_llm().stream(messages):
         if chunk.content:
             yield str(chunk.content)
