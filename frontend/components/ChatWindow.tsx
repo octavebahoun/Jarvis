@@ -4,14 +4,30 @@ import { useEffect, useRef } from "react";
 
 import type { ChatMessage } from "@/lib/api";
 
-export default function ChatWindow({ messages }: { messages: ChatMessage[] }) {
+function ThinkingBubble() {
+  return (
+    <div className="flex w-fit items-center gap-1 self-start rounded-2xl border border-zinc-700/70 bg-zinc-900/70 px-4 py-3">
+      <span className="typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400" />
+      <span className="typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400" style={{ animationDelay: "0.15s" }} />
+      <span className="typing-dot h-1.5 w-1.5 rounded-full bg-zinc-400" style={{ animationDelay: "0.3s" }} />
+    </div>
+  );
+}
+
+export default function ChatWindow({
+  messages,
+  isThinking = false,
+}: {
+  messages: ChatMessage[];
+  isThinking?: boolean;
+}) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isThinking]);
 
-  if (messages.length === 0) {
+  if (messages.length === 0 && !isThinking) {
     return (
       <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
         Dis bonjour à Jarvis pour démarrer la conversation.
@@ -33,6 +49,7 @@ export default function ChatWindow({ messages }: { messages: ChatMessage[] }) {
           {message.content}
         </div>
       ))}
+      {isThinking && <ThinkingBubble />}
       <div ref={bottomRef} />
     </div>
   );

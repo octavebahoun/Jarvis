@@ -3,6 +3,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  ts: number;
 }
 
 export interface ProfileResponse {
@@ -33,4 +34,22 @@ export function sendChatMessage(message: string, sessionId: string) {
 
 export function getProfile() {
   return request<ProfileResponse>("/profile");
+}
+
+interface ShortTermItem {
+  role: "user" | "assistant";
+  content: string;
+  ts: number;
+}
+
+export async function getShortTermHistory(sessionId: string): Promise<ChatMessage[]> {
+  const { items } = await request<{ items: ShortTermItem[] }>(
+    `/memory?type=short_term&session_id=${encodeURIComponent(sessionId)}`,
+  );
+
+  return items.map((item) => ({
+    role: item.role,
+    content: item.content,
+    ts: item.ts * 1000,
+  }));
 }

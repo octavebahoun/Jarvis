@@ -14,10 +14,11 @@ def test_chat_persists_exchange_in_short_term_memory(client, session_id):
 
     assert response.status_code == 200
     items = response.json()["items"]
-    assert items == [
+    assert [{"role": item["role"], "content": item["content"]} for item in items] == [
         {"role": "user", "content": "Salut Jarvis"},
         {"role": "assistant", "content": "Réponse de test."},
     ]
+    assert all(isinstance(item["ts"], (int, float)) for item in items)
 
 
 def test_chat_keeps_history_across_messages_in_same_session(client, session_id):

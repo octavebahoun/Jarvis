@@ -1,4 +1,5 @@
 import json
+import time
 from functools import lru_cache
 
 import redis
@@ -26,5 +27,5 @@ def get_history(session_id: str) -> list[dict]:
 def append_message(session_id: str, role: str, content: str) -> None:
     client = get_client()
     key = _key(session_id)
-    client.rpush(key, json.dumps({"role": role, "content": content}))
+    client.rpush(key, json.dumps({"role": role, "content": content, "ts": time.time()}))
     client.expire(key, settings.short_term_ttl_seconds)
