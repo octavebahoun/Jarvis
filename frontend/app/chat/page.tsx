@@ -5,9 +5,19 @@ import Link from "next/link";
 
 import ChatWindow from "@/components/ChatWindow";
 import InputBar from "@/components/InputBar";
-import { getShortTermHistory, streamChatMessage, type ChatMessage } from "@/lib/api";
+import { ApiError, getShortTermHistory, streamChatMessage, type ChatMessage } from "@/lib/api";
 
 const SESSION_STORAGE_KEY = "jarvis:session_id";
+
+function describeSendError(err: unknown): string {
+  if (err instanceof ApiError) {
+    if (err.status === 502) return "Le modèle IA (LLM) est indisponible côté serveur.";
+    if (err.status === 422) return "Message invalide.";
+    return `Erreur serveur inattendue (code ${err.status}).`;
+  }
+
+  return "Impossible de joindre Jarvis. Vérifie que le backend tourne (docker-compose up).";
+}
 
 function loadOrCreateSessionId(): string {
   const existing = localStorage.getItem(SESSION_STORAGE_KEY);
@@ -77,8 +87,8 @@ export default function ChatPage() {
       if (failed) {
         setError("Le LLM a rencontré une erreur pendant la génération de la réponse.");
       }
-    } catch {
-      setError("Jarvis est indisponible. Vérifie que le backend tourne bien.");
+    } catch (err) {
+      setError(describeSendError(err));
     } finally {
       setIsSending(false);
       setStreamingReply("");

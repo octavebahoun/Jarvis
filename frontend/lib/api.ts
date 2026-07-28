@@ -6,6 +6,18 @@ export interface ChatMessage {
   ts: number;
 }
 
+/** Erreur HTTP renvoyée par l'API Jarvis (par opposition à une erreur réseau :
+ * backend injoignable, qui lève une TypeError native de `fetch`, pas une ApiError). */
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export interface ProfileResponse {
   username: string;
   tech_stack: string[];
@@ -19,7 +31,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
-    throw new Error(`Jarvis API error ${res.status}: ${await res.text()}`);
+    throw new ApiError(res.status, await res.text().catch(() => res.statusText));
   }
 
   return res.json() as Promise<T>;
@@ -69,7 +81,7 @@ export async function streamChatMessage(
   });
 
   if (!res.ok || !res.body) {
-    throw new Error(`Jarvis API error ${res.status}: ${await res.text().catch(() => "")}`);
+    throw new ApiError(res.status, await res.text().catch(() => res.statusText));
   }
 
   const reader = res.body.getReader();
