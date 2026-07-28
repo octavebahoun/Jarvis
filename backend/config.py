@@ -35,6 +35,10 @@ class Settings(BaseSettings):
 
     default_user_id: str = "default"
 
+    # Phase 2 — Tool System : répertoire auquel file_reader (et les futurs
+    # tools fichiers) sont strictement limités. Jamais d'accès hors de ce dossier.
+    sandbox_path: str = "./sandbox"
+
 
 @lru_cache
 def get_settings() -> Settings:

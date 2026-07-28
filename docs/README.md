@@ -5,3 +5,4 @@ décrit une évolution : ce qui a été construit, les décisions prises et pour
 et l'état résultant (ce qui marche, ce qui reste à faire).
 
 - [`phase1/`](./phase1) — Phase 1 (MVP) : chat + mémoire + profil utilisateur.
+- [`phase2/`](./phase2) — Phase 2 : agent, tools, planification, actions.
