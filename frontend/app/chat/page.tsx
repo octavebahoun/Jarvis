@@ -39,8 +39,10 @@ export default function ChatPage() {
   const [isMemoryPanelOpen, setIsMemoryPanelOpen] = useState(false);
 
   // La session est résolue côté client uniquement (localStorage n'existe pas
-  // pendant le rendu serveur), d'où l'aller via useEffect plutôt qu'un état initial.
+  // pendant le rendu serveur) : un état initial dépendant de window créerait
+  // un mismatch d'hydratation SSR, d'où l'useEffect plutôt qu'un lazy useState.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSessionId(loadOrCreateSessionId());
   }, []);
 
