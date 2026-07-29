@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
-from db.models import Plan
+from db.models import Automation, Plan
 
 
 class PlanStepResponse(BaseModel):
@@ -39,4 +41,28 @@ def plan_to_response(plan: Plan) -> PlanResponse:
             )
             for step in plan.steps
         ],
+    )
+
+
+class AutomationResponse(BaseModel):
+    id: str
+    name: str
+    schedule: str
+    task: str
+    active: bool
+    last_run_at: datetime | None = None
+    last_run_status: str | None = None
+    last_run_plan_id: str | None = None
+
+
+def automation_to_response(automation: Automation) -> AutomationResponse:
+    return AutomationResponse(
+        id=automation.id,
+        name=automation.name,
+        schedule=automation.schedule,
+        task=automation.task,
+        active=automation.active,
+        last_run_at=automation.last_run_at,
+        last_run_status=automation.last_run_status,
+        last_run_plan_id=automation.last_run_plan_id,
     )
