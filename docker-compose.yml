@@ -27,10 +27,53 @@ services:
     ports:
       - "8080:8080"
     env_file: .env
+    environment:
+      # Surcharge les valeurs "localhost" de .env (pensées pour un lancement
+      # direct sur l'hôte) : depuis l'intérieur d'un container, ces services
+      # sont joignables par leur nom de service Docker Compose, pas "localhost".
+      DATABASE_URL: postgresql://jarvis:jarvis@postgres:5432/jarvis
+      REDIS_URL: redis://redis:6379
+      CHROMA_HOST: chroma
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
     depends_on:
       - postgres
       - redis
       - chroma
+    volumes:
+      # Phase 2 : les tools code_executor / browser_automation lancent des
+      # containers Docker "frères" (sandbox jetable) depuis le backend. Le
+      # backend a donc besoin du socket Docker de l'hôte (docker-out-of-docker),
+      # pas d'un vrai Docker-in-Docker imbriqué.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Répertoire SANDBOX_PATH du tool file_reader : dépose tes fichiers ici
+      # (./sandbox à la racine du projet) pour qu'il puisse les lire.
+      - ./sandbox:/app/sandbox
+
+  worker:
+    build: ./backend
+    # Applique aussi les migrations ici : le worker peut démarrer avant que le
+    # backend ait fini les siennes (depends_on n'attend que le démarrage du
+    # container, pas la fin de sa commande). alembic upgrade head est idempotent.
+    command: sh -c "alembic upgrade head && celery -A tasks.worker.celery_app worker --loglevel=info"
+    env_file: .env
+    environment:
+      # Même correction que le service backend, cf. commentaire ci-dessus.
+      DATABASE_URL: postgresql://jarvis:jarvis@postgres:5432/jarvis
+      REDIS_URL: redis://redis:6379
+      CHROMA_HOST: chroma
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      - postgres
+      - redis
+      - chroma
+    volumes:
+      # Même besoin que le backend : exécute les tools sandboxés (code_executor,
+      # browser_automation) via le socket Docker de l'hôte.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # execute_plan (donc file_reader) tourne réellement ici, dans le worker.
+      - ./sandbox:/app/sandbox
 
 volumes:
   postgres_data:

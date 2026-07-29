@@ -13,16 +13,20 @@ Fournir une API qui orchestre :
 
 ## État actuel (index du projet)
 
-Le dossier backend est **scaffoldé** : l’arborescence est prête, mais la majorité des modules Python sont encore vides.
+La Phase 1 (chat + mémoire + profil) est implémentée :
 
-Fichiers clés déjà présents :
-
-- `main.py` (entrée FastAPI, vide pour l’instant)
-- `api/routes/` (routes `chat`, `memory`, `profile`)
-- `agent/` (`controller`, `reasoning`)
-- `memory/` (`short_term`, `long_term`, `vector_store`)
-- `identity/profile.py`
-- `db/` (`models`, `session`)
+- `main.py` : app FastAPI, CORS, `init_db()` au démarrage.
+- `api/routes/` : `chat.py` (`POST /chat`), `memory.py` (`GET /memory`),
+  `profile.py` (`GET/PUT /profile`).
+- `agent/` : `controller.py` (orchestration), `reasoning.py` (prompt +
+  appel LLM).
+- `memory/` : `short_term.py` (Redis), `long_term.py` (faits PostgreSQL),
+  `vector_store.py` (Chroma, RAG).
+- `identity/profile.py` : profil utilisateur (utilisateur unique en Phase 1).
+- `db/` : `models.py` (`User`, `Fact`, `Message`), `session.py` (engine +
+  `init_db`).
+- `tests/` : suite pytest (`GET /health`, `/profile`, `/chat`, `/memory`) —
+  voir la section Tests ci-dessous.
 
 ## Stack backend
 
@@ -53,16 +57,40 @@ Le service backend :
 - écoute sur le port `8080`
 - dépend de `postgres`, `redis`, `chroma`
 
-## Priorités de développement backend
+## Tests
 
-1. Initialiser `main.py` avec l’app FastAPI et l’enregistrement des routers.
-2. Implémenter les endpoints de base :
-   - `POST /chat`
-   - `GET/POST /memory`
-   - `GET/PUT /profile`
-3. Créer la couche DB (`db/session.py`, `db/models.py`).
-4. Brancher la mémoire vectorielle dans `memory/vector_store.py`.
-5. Ajouter observabilité, gestion d’erreurs et tests.
+```bash
+docker-compose up -d postgres redis   # pas besoin de chroma/backend pour les tests
+pip install -r requirements-dev.txt
+pytest -v
+```
+
+Le LLM et la mémoire vectorielle sont simulés (voir `tests/conftest.py`) : pas
+besoin de clé `OPENAI_API_KEY` ni de service Chroma actif pour lancer la suite.
+
+## Migrations (Alembic)
+
+Le schéma est géré par Alembic (`alembic/`), pas par `create_all()` seul —
+nécessaire dès qu'une table existante change (ex. `Plan.summary`, Phase 2) :
+`create_all()` crée les tables manquantes mais n'altère jamais une table déjà
+présente. `docker-compose` applique les migrations automatiquement au
+démarrage (`backend` et `worker`, cf. `dockerfile`/`docker-compose.yml`).
+
+```bash
+# Après tout changement de backend/db/models.py :
+alembic revision --autogenerate -m "description du changement"
+alembic upgrade head
+```
+
+`alembic/env.py` lit `DATABASE_URL` depuis `config.get_settings()` (donc
+depuis l'environnement), pas depuis une valeur figée dans `alembic.ini`.
+
+## Prochaines priorités (au-delà des Phases 1 et 2)
+
+1. Ajouter observabilité (logs structurés) et gestion d’erreurs sur les
+   appels LLM (timeout / erreur API OpenAI → réponse dégradée plutôt que 500)
+   — fait pour le chat (Phase 1), à généraliser.
+2. Authentification (JWT) quand le multi-utilisateur devient nécessaire.
 
 ## Convention recommandée
 

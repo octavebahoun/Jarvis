@@ -9,4 +9,6 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+# Applique les migrations Alembic avant de démarrer l'API : la base doit
+# toujours être à jour avec les modèles (cf. docs/phase2/13-alembic-migrations.md).
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8080 --reload"]

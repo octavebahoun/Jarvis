@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 function NeuralFace() {
   const baseNodes = [
     { x: 110, y: 80 },
@@ -235,9 +237,15 @@ export default function Home() {
               humaine.
             </p>
             <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/chat"
+                className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-300"
+              >
+                Ouvrir le chat
+              </Link>
               <a
                 href="#vision"
-                className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-300"
+                className="rounded-full border border-zinc-600 px-6 py-3 font-semibold text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800"
               >
                 Découvrir Jarvis
               </a>

@@ -4,3 +4,8 @@
 **/.env
 **/*.log
 **/venv/
+
+# Phase 2 — répertoire sandbox du tool file_reader (contenu de l'utilisateur,
+# pas du dépôt).
+/sandbox/*
+!/sandbox/.gitkeep
