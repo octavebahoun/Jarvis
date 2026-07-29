@@ -20,6 +20,20 @@ services:
     ports:
       - "6379:6379"
 
+  # Construit l'image sandbox du tool browser_automation (cf.
+  # docker/playwright-sandbox.dockerfile et
+  # docs/phase2/15-fix-image-playwright-sans-paquet-pip.md). Ce service ne
+  # démarre jamais lui-même (profile jamais activé par un `up` normal) : il
+  # sert uniquement à builder/tagger l'image via
+  # `docker compose build browser-sandbox-image`, à faire une fois avant le
+  # premier test de browser_automation.
+  browser-sandbox-image:
+    build:
+      context: .
+      dockerfile: docker/playwright-sandbox.dockerfile
+    image: jarvis-playwright-sandbox:v1.49.0
+    profiles: ["build-only"]
+
   chroma:
     image: chromadb/chroma:latest
     ports:
