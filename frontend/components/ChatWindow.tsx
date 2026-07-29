@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 
+import AutomationCard from "@/components/AutomationCard";
 import PlanViewer from "@/components/PlanViewer";
 import type { ChatMessage } from "@/lib/api";
 
@@ -50,6 +51,10 @@ export default function ChatWindow({
       {messages.map((message, index) => {
         if (message.role === "plan") {
           return <PlanViewer key={index} planId={message.planId} />;
+        }
+
+        if (message.role === "automation") {
+          return <AutomationCard key={index} automationId={message.automationId} />;
         }
 
         return (

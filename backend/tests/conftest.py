@@ -23,6 +23,14 @@ def client(monkeypatch):
     # Par défaut : le planner ne propose aucun plan (comportement chat simple).
     # Les tests Phase 2 qui veulent un plan surchargent ceci explicitement.
     monkeypatch.setattr(controller.planner, "build_plan", lambda goal: controller.planner.ProposedPlan(steps=[]))
+    # Par défaut : aucune intention de planification détectée (comportement
+    # chat/plan normal). Les tests Phase 3 qui veulent une automatisation
+    # surchargent ceci explicitement.
+    monkeypatch.setattr(
+        controller.schedule_intent,
+        "detect_schedule_intent",
+        lambda goal, now: controller.schedule_intent.ScheduleIntent(scheduled=False),
+    )
 
     with TestClient(app) as test_client:
         yield test_client

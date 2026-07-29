@@ -127,6 +127,22 @@ Prérequis : `docker compose build browser-sandbox-image` (si pas déjà fait) +
       (pas de route DELETE pour l'instant — direct en base ou laisser
       `active: false`)
 
+### Pont chat → automatisation (langage naturel)
+
+- [ ] Dans `/chat`, écrire *"cherche les dernières nouvelles sur l'IA dans 2
+      minutes"* → une carte "Programmé" apparaît dans le fil (pas un plan à
+      approuver, pas de réponse texte immédiate)
+- [ ] Attendre ~2 minutes, vérifier via `GET /automations` que
+      `last_run_status` est passé à `"done"`
+- [ ] Écrire *"cherche les news IA tous les matins à 9h"* → carte "Programmé"
+      avec un cron récurrent (`GET /automations/:id`, champ `schedule`)
+- [ ] Écrire un message qui ne nécessite ni planification ni tool (*"Salut,
+      ça va ?"*) → toujours traité comme du chat normal (pas de régression
+      Phase 1/2)
+- [ ] Écrire une demande de tool immédiate (*"cherche les news IA"*, sans
+      indication temporelle) → toujours un plan à approuver (pas une
+      automatisation créée par erreur)
+
 ## Après le passage complet
 
 Si tout est coché : la Phase 2 est validée de bout en bout avec la vraie

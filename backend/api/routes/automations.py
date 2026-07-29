@@ -45,6 +45,15 @@ def list_automations(db: Session = Depends(get_db)) -> list[AutomationResponse]:
     return [automation_to_response(automation) for automation in automation_store.list_automations(db, user.id)]
 
 
+@router.get("/automations/{automation_id}", response_model=AutomationResponse)
+def get_automation(automation_id: str, db: Session = Depends(get_db)) -> AutomationResponse:
+    automation = automation_store.get_automation(db, automation_id)
+    if automation is None:
+        raise HTTPException(status_code=404, detail="Automatisation introuvable.")
+
+    return automation_to_response(automation)
+
+
 @router.put("/automations/{automation_id}/toggle", response_model=AutomationResponse)
 def toggle_automation(automation_id: str, db: Session = Depends(get_db)) -> AutomationResponse:
     automation = automation_store.get_automation(db, automation_id)

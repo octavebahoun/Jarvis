@@ -40,21 +40,11 @@ def _system_prompt() -> str:
     )
 
 
-def _strip_code_fence(text: str) -> str:
-    """Certains modèles entourent le JSON de ```json ... ``` malgré la consigne."""
-    text = text.strip()
-    if text.startswith("```"):
-        text = text.split("\n", 1)[1] if "\n" in text else ""
-        if text.endswith("```"):
-            text = text.rsplit("```", 1)[0]
-    return text.strip()
-
-
 def build_plan(goal: str) -> ProposedPlan:
     """Décide si `goal` nécessite des tools et, si oui, le découpe en étapes structurées."""
     llm = reasoning._get_llm()
     response = llm.invoke([SystemMessage(content=_system_prompt()), HumanMessage(content=goal)])
-    raw = _strip_code_fence(str(response.content))
+    raw = reasoning.strip_json_code_fence(str(response.content))
 
     try:
         payload = json.loads(raw)
