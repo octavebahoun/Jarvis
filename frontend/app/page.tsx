@@ -243,6 +243,12 @@ export default function Home() {
               >
                 Ouvrir le chat
               </Link>
+              <Link
+                href="/dashboard"
+                className="rounded-full border border-zinc-600 px-6 py-3 font-semibold text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800"
+              >
+                Dashboard
+              </Link>
               <a
                 href="#vision"
                 className="rounded-full border border-zinc-600 px-6 py-3 font-semibold text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800"
