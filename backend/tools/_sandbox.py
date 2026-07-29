@@ -13,6 +13,16 @@ class SandboxTimeoutError(TimeoutError):
     """Le container n'a pas terminé dans le délai imparti et a été tué."""
 
 
+def _ensure_image(client, image: str) -> None:
+    """`containers.create()` (API bas niveau) ne télécharge pas une image
+    manquante, contrairement à `docker run` en CLI — il faut le faire
+    explicitement, sans quoi la création échoue en 404 "No such image"."""
+    try:
+        client.images.get(image)
+    except docker.errors.ImageNotFound:
+        client.images.pull(image)
+
+
 def run_in_container(
     image: str,
     command: list[str],
@@ -28,6 +38,7 @@ def run_in_container(
     y compris en cas de timeout ou d'erreur du daemon Docker.
     """
     client = docker.from_env()
+    _ensure_image(client, image)
     container = client.containers.create(
         image=image,
         command=command,

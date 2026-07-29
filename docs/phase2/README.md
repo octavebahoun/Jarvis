@@ -12,3 +12,4 @@ Ordre de lecture recommandé :
 8. [08-recapitulatif-et-validation.md](./08-recapitulatif-et-validation.md)
 9. [09-fix-networking-docker-compose.md](./09-fix-networking-docker-compose.md)
 10. [10-fix-imports-celery-worker.md](./10-fix-imports-celery-worker.md)
+11. [11-fix-pull-image-manquante.md](./11-fix-pull-image-manquante.md)

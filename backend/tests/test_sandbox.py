@@ -1,3 +1,4 @@
+import docker
 import pytest
 
 import tools._sandbox as sandbox_module
@@ -40,9 +41,28 @@ class _FakeContainersAPI:
         return self._container
 
 
+class _FakeImagesAPI:
+    """Par défaut, l'image est déjà présente localement (cas le plus courant
+    une fois qu'elle a été téléchargée une première fois)."""
+
+    def __init__(self, image_present=True):
+        self.image_present = image_present
+        self.pulled = []
+
+    def get(self, image):
+        if not self.image_present:
+            raise docker.errors.ImageNotFound(f"image manquante : {image}")
+        return {"Id": image}
+
+    def pull(self, image):
+        self.pulled.append(image)
+        self.image_present = True
+
+
 class _FakeDockerClient:
-    def __init__(self, container):
+    def __init__(self, container, image_present=True):
         self.containers = _FakeContainersAPI(container)
+        self.images = _FakeImagesAPI(image_present=image_present)
 
 
 def test_run_in_container_returns_logs_and_cleans_up(monkeypatch):
@@ -62,6 +82,23 @@ def test_run_in_container_returns_logs_and_cleans_up(monkeypatch):
     assert container.started is True
     assert container.removed is True
     assert client.containers.create_kwargs["network_disabled"] is True
+    assert client.images.pulled == []  # image déjà présente : pas de pull
+
+
+def test_run_in_container_pulls_image_when_missing_locally(monkeypatch):
+    container = _FakeContainer(logs=b"ok")
+    client = _FakeDockerClient(container, image_present=False)
+    monkeypatch.setattr(sandbox_module.docker, "from_env", lambda: client)
+
+    run_in_container(
+        image="python:3.11-slim",
+        command=["python", "-c", "print(1)"],
+        timeout_seconds=5,
+        mem_limit="128m",
+        nano_cpus=500_000_000,
+    )
+
+    assert client.images.pulled == ["python:3.11-slim"]
 
 
 def test_run_in_container_kills_and_raises_on_timeout(monkeypatch):
