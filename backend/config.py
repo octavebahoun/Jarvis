@@ -49,8 +49,11 @@ class Settings(BaseSettings):
     code_executor_cpu_limit: float = 0.5
 
     # Phase 2 — tool browser_automation (Playwright) : container jetable,
-    # réseau activé (nécessaire pour atteindre de vrais sites).
-    browser_automation_image: str = "mcr.microsoft.com/playwright/python:v1.49.0-noble"
+    # réseau activé (nécessaire pour atteindre de vrais sites). Image maison
+    # (docker/playwright-sandbox.dockerfile), l'image officielle ne contenant
+    # pas le paquet pip "playwright" — cf.
+    # docs/phase2/15-fix-image-playwright-sans-paquet-pip.md.
+    browser_automation_image: str = "jarvis-playwright-sandbox:v1.49.0"
     browser_automation_timeout_seconds: int = 30
     browser_automation_memory_limit: str = "512m"
     browser_automation_cpu_limit: float = 1.0
