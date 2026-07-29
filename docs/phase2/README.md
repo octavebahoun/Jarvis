@@ -14,3 +14,4 @@ Ordre de lecture recommandé :
 10. [10-fix-imports-celery-worker.md](./10-fix-imports-celery-worker.md)
 11. [11-fix-pull-image-manquante.md](./11-fix-pull-image-manquante.md)
 12. [12-synthese-finale-du-plan.md](./12-synthese-finale-du-plan.md)
+13. [13-alembic-migrations.md](./13-alembic-migrations.md)

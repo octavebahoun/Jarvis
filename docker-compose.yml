@@ -52,7 +52,10 @@ services:
 
   worker:
     build: ./backend
-    command: celery -A tasks.worker.celery_app worker --loglevel=info
+    # Applique aussi les migrations ici : le worker peut démarrer avant que le
+    # backend ait fini les siennes (depends_on n'attend que le démarrage du
+    # container, pas la fin de sa commande). alembic upgrade head est idempotent.
+    command: sh -c "alembic upgrade head && celery -A tasks.worker.celery_app worker --loglevel=info"
     env_file: .env
     environment:
       # Même correction que le service backend, cf. commentaire ci-dessus.
