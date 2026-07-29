@@ -6,3 +6,5 @@ et l'état résultant (ce qui marche, ce qui reste à faire).
 
 - [`phase1/`](./phase1) — Phase 1 (MVP) : chat + mémoire + profil utilisateur.
 - [`phase2/`](./phase2) — Phase 2 : agent, tools, planification, actions.
+- [`checklist-test-manuel.md`](./checklist-test-manuel.md) — tests fonctionnels
+  manuels à faire en complément de la suite `pytest` automatisée.
