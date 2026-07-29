@@ -175,3 +175,14 @@ export interface AutomationResponse {
 export function getAutomation(automationId: string) {
   return request<AutomationResponse>(`/automations/${encodeURIComponent(automationId)}`);
 }
+
+export function listAutomations() {
+  return request<AutomationResponse[]>("/automations");
+}
+
+/** Bascule active <-> inactive. Le backend renvoie l'automatisation à jour. */
+export function toggleAutomation(automationId: string) {
+  return request<AutomationResponse>(`/automations/${encodeURIComponent(automationId)}/toggle`, {
+    method: "PUT",
+  });
+}

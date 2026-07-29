@@ -114,6 +114,9 @@ export default function ChatPage() {
           </Link>
           <span className="text-sm tracking-wide text-zinc-300">JARVIS · Chat</span>
           <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="text-sm text-zinc-400 hover:text-zinc-200">
+              Dashboard
+            </Link>
             <button
               onClick={() => setIsMemoryPanelOpen((open) => !open)}
               className="text-sm text-zinc-400 hover:text-zinc-200"

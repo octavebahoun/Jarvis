@@ -143,6 +143,29 @@ Prérequis : `docker compose build browser-sandbox-image` (si pas déjà fait) +
       indication temporelle) → toujours un plan à approuver (pas une
       automatisation créée par erreur)
 
+### Dashboard — automatisations
+
+- [ ] Ouvrir `/dashboard` (bouton depuis l'accueil, ou lien "Dashboard" dans
+      l'en-tête du chat) → la liste des automatisations s'affiche
+- [ ] Sans aucune automatisation en base → message "Aucune automatisation
+      pour l'instant" avec un lien vers le chat (pas une page vide)
+- [ ] Backend éteint (`docker compose stop backend`) puis recharger
+      `/dashboard` → message d'erreur explicite, pas d'écran blanc
+- [ ] Créer une automatisation quotidienne (*"cherche les news IA tous les
+      matins à 9h"*) → la ligne affiche un libellé lisible ("Tous les jours à
+      08:00 UTC"), l'heure locale ("≈ 09:00 chez toi") et le cron brut
+- [ ] Vérifier que l'heure locale correspond bien à ton fuseau (UTC+1) —
+      c'est le point le plus facile à se tromper en relisant
+- [ ] Cliquer sur le bouton "Active" d'une ligne → il passe à "Inactive", la
+      ligne se grise, le compteur "N actives sur M" se met à jour
+- [ ] Recharger la page → l'état désactivé a bien persisté en base
+- [ ] Re-cliquer pour réactiver → retour à "Active"
+- [ ] Attendre le déclenchement d'une automatisation, cliquer "Rafraîchir" →
+      le statut de dernière exécution et sa date apparaissent
+- [ ] Une automatisation jamais déclenchée affiche "Jamais exécutée"
+- [ ] Profiter du dashboard pour **désactiver les automatisations de test**
+      résiduelles créées pendant les validations précédentes
+
 ## Après le passage complet
 
 Si tout est coché : la Phase 2 est validée de bout en bout avec la vraie
