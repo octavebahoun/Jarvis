@@ -15,3 +15,4 @@ Ordre de lecture recommandé :
 11. [11-fix-pull-image-manquante.md](./11-fix-pull-image-manquante.md)
 12. [12-synthese-finale-du-plan.md](./12-synthese-finale-du-plan.md)
 13. [13-alembic-migrations.md](./13-alembic-migrations.md)
+14. [14-fix-course-migrations-concurrentes.md](./14-fix-course-migrations-concurrentes.md)

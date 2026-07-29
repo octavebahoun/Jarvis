@@ -9,6 +9,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jarvis"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
 
   redis:
     image: redis:7
@@ -21,6 +26,21 @@ services:
       - "8000:8000"
     volumes:
       - chroma_data:/chroma/chroma
+
+  # Applique les migrations Alembic une seule fois, avant que backend et
+  # worker ne démarrent. Isolé dans son propre service (plutôt que lancé par
+  # backend et worker chacun de leur côté) pour éviter que deux containers ne
+  # créent la table alembic_version en même temps sur une base neuve — cf.
+  # docs/phase2/14-fix-course-migrations-concurrentes.md.
+  migrate:
+    build: ./backend
+    command: alembic upgrade head
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://jarvis:jarvis@postgres:5432/jarvis
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   backend:
     build: ./backend
@@ -37,9 +57,12 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
     depends_on:
-      - postgres
-      - redis
-      - chroma
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      chroma:
+        condition: service_started
     volumes:
       # Phase 2 : les tools code_executor / browser_automation lancent des
       # containers Docker "frères" (sandbox jetable) depuis le backend. Le
@@ -52,10 +75,7 @@ services:
 
   worker:
     build: ./backend
-    # Applique aussi les migrations ici : le worker peut démarrer avant que le
-    # backend ait fini les siennes (depends_on n'attend que le démarrage du
-    # container, pas la fin de sa commande). alembic upgrade head est idempotent.
-    command: sh -c "alembic upgrade head && celery -A tasks.worker.celery_app worker --loglevel=info"
+    command: celery -A tasks.worker.celery_app worker --loglevel=info
     env_file: .env
     environment:
       # Même correction que le service backend, cf. commentaire ci-dessus.
@@ -65,9 +85,12 @@ services:
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
     depends_on:
-      - postgres
-      - redis
-      - chroma
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+      chroma:
+        condition: service_started
     volumes:
       # Même besoin que le backend : exécute les tools sandboxés (code_executor,
       # browser_automation) via le socket Docker de l'hôte.

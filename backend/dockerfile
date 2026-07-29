@@ -9,6 +9,9 @@ COPY . .
 
 EXPOSE 8080
 
-# Applique les migrations Alembic avant de démarrer l'API : la base doit
-# toujours être à jour avec les modèles (cf. docs/phase2/13-alembic-migrations.md).
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8080 --reload"]
+# Les migrations Alembic sont appliquées par le service dédié "migrate" de
+# docker-compose.yml, avant que backend/worker ne démarrent (cf.
+# docs/phase2/14-fix-course-migrations-concurrentes.md) : elles ne sont plus
+# lancées ici pour éviter que deux containers ne migrent la même base en
+# parallèle.
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
