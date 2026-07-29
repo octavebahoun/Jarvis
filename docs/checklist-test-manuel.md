@@ -101,6 +101,48 @@ Pour chaque tool, vérifie le **cycle complet** : plan proposé (pending) →
 
 ---
 
+## Phase 3 — Scheduler + automatisations
+
+Prérequis : `docker compose build browser-sandbox-image` (si pas déjà fait) +
+`docker compose up -d --build` (inclut désormais le service `beat`).
+
+- [ ] `POST /automations` avec un schedule cron invalide (ex. `"pas un cron"`)
+      → 422
+- [ ] `POST /automations` avec `{"name": "Test", "schedule": "* * * * *",
+      "task": "cherche les dernières nouvelles sur l'IA"}` (toutes les
+      minutes, pour tester vite) → 200, `active: true`
+- [ ] Dans `docker compose logs -f beat` : un tick `scheduler.tick` visible
+      chaque minute
+- [ ] Dans `docker compose logs -f worker` : dans la minute qui suit, la
+      tâche s'exécute (le worker traite `scheduler.tick` puis lance le plan)
+- [ ] `GET /automations` → `last_run_status: "done"`, `last_run_plan_id`
+      renseigné, `last_run_at` mis à jour
+- [ ] `GET /tasks/<last_run_plan_id>` → le plan est bien "done" avec un résumé
+- [ ] `PUT /automations/:id/toggle` → `active: false` ; attendre une minute,
+      vérifier qu'elle ne se relance plus (`last_run_at` ne change plus)
+- [ ] Créer une automatisation dont la tâche pousse le planner vers un tool
+      sensible (ex. *"exécute ce code Python : print(1)"*) → doit échouer
+      proprement (`last_run_status: "failed"`), jamais s'auto-approuver
+- [ ] Supprimer l'automatisation de test une fois les vérifications faites
+      (pas de route DELETE pour l'instant — direct en base ou laisser
+      `active: false`)
+
+### Pont chat → automatisation (langage naturel)
+
+- [ ] Dans `/chat`, écrire *"cherche les dernières nouvelles sur l'IA dans 2
+      minutes"* → une carte "Programmé" apparaît dans le fil (pas un plan à
+      approuver, pas de réponse texte immédiate)
+- [ ] Attendre ~2 minutes, vérifier via `GET /automations` que
+      `last_run_status` est passé à `"done"`
+- [ ] Écrire *"cherche les news IA tous les matins à 9h"* → carte "Programmé"
+      avec un cron récurrent (`GET /automations/:id`, champ `schedule`)
+- [ ] Écrire un message qui ne nécessite ni planification ni tool (*"Salut,
+      ça va ?"*) → toujours traité comme du chat normal (pas de régression
+      Phase 1/2)
+- [ ] Écrire une demande de tool immédiate (*"cherche les news IA"*, sans
+      indication temporelle) → toujours un plan à approuver (pas une
+      automatisation créée par erreur)
+
 ## Après le passage complet
 
 Si tout est coché : la Phase 2 est validée de bout en bout avec la vraie

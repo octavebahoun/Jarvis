@@ -87,6 +87,8 @@ export default function ChatPage() {
 
       if (result.type === "plan") {
         setMessages((prev) => [...prev, { role: "plan", planId: result.planId, ts: Date.now() }]);
+      } else if (result.type === "automation") {
+        setMessages((prev) => [...prev, { role: "automation", automationId: result.automationId, ts: Date.now() }]);
       } else {
         if (result.reply) {
           setMessages((prev) => [...prev, { role: "assistant", content: result.reply, ts: Date.now() }]);

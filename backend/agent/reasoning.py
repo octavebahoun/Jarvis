@@ -50,6 +50,18 @@ def _get_llm() -> ChatOpenAI:
     return ChatOpenAI(model=settings.openai_model, api_key=settings.openai_api_key)
 
 
+def strip_json_code_fence(text: str) -> str:
+    """Certains modèles entourent leur JSON de ```json ... ``` malgré la
+    consigne de répondre en JSON brut — utilisé par tout module qui fait
+    parler le LLM en JSON (planner.py, schedule_intent.py)."""
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1] if "\n" in text else ""
+        if text.endswith("```"):
+            text = text.rsplit("```", 1)[0]
+    return text.strip()
+
+
 def generate_reply(messages: list[BaseMessage]) -> str:
     response = _get_llm().invoke(messages)
     return str(response.content)

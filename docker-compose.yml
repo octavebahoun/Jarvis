@@ -112,6 +112,26 @@ services:
       # execute_plan (donc file_reader) tourne réellement ici, dans le worker.
       - ./sandbox:/app/sandbox
 
+  # Phase 3 : Celery Beat programme le tick du scheduler proactif chaque
+  # minute (scheduler/jobs.py). Beat se contente de publier la tâche sur
+  # Redis — c'est le service "worker" qui l'exécute réellement, donc "beat"
+  # n'a besoin ni du socket Docker ni du volume sandbox.
+  beat:
+    build: ./backend
+    command: celery -A tasks.worker.celery_app beat --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://jarvis:jarvis@postgres:5432/jarvis
+      REDIS_URL: redis://redis:6379
+      CHROMA_HOST: chroma
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_started
+
 volumes:
   postgres_data:
   chroma_data:

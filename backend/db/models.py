@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.session import Base
@@ -96,3 +96,25 @@ class PlanStep(Base):
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     plan: Mapped[Plan] = relationship(back_populates="steps")
+
+
+class Automation(Base):
+    """Phase 3 : automatisation proactive — déclenchée par le scheduler (cron),
+    sans validation humaine (cf. phase3.md). `task` est transmis tel quel au
+    planner (agent/planner.py), exactement comme le `goal` d'une demande
+    utilisateur en Phase 2."""
+
+    __tablename__ = "automations"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    name: Mapped[str] = mapped_column(String)
+    # Expression cron standard à 5 champs, évaluée en UTC (cf. scheduler/registry.py).
+    schedule: Mapped[str] = mapped_column(String)
+    task: Mapped[str] = mapped_column(Text)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    # pending (jamais encore exécutée) -> done | failed
+    last_run_status: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_run_plan_id: Mapped[str | None] = mapped_column(ForeignKey("plans.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

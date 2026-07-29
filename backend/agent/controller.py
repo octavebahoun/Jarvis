@@ -1,15 +1,16 @@
 import logging
 import uuid
 from collections.abc import Iterator
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from agent import planner, reasoning
-from db.models import Message, Plan, User
+from agent import planner, reasoning, schedule_intent
+from db.models import Automation, Message, Plan, User
 from db.session import SessionLocal
 from identity.profile import get_or_create_user
 from memory import short_term, vector_store
-from tasks import task_store
+from tasks import automation_store, task_store
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,11 @@ STREAM_ERROR_MARKER = "\n\n<<JARVIS_STREAM_ERROR>>"
 # Phase 2 : un plan proposé est signalé dans le flux par ce marqueur suivi de
 # l'id du plan (le frontend va chercher les détails via GET /tasks/:id).
 PLAN_MARKER = "\n\n<<JARVIS_PLAN>>"
+
+# Phase 3 : une automatisation programmée est signalée dans le flux par ce
+# marqueur suivi de l'id de l'automatisation (le frontend va chercher les
+# détails via GET /automations/:id).
+AUTOMATION_MARKER = "\n\n<<JARVIS_AUTOMATION>>"
 
 
 class AgentUnavailableError(RuntimeError):
@@ -44,6 +50,32 @@ def _safe_add_memory(memory_id: str, text: str, metadata: dict) -> None:
         vector_store.add_memory(memory_id=memory_id, text=text, metadata=metadata)
     except Exception:
         logger.exception("Échec de l'indexation du souvenir dans la mémoire vectorielle (ignoré).")
+
+
+def _maybe_create_automation(db: Session, user: User, user_message: str) -> Automation | None:
+    """Demande au LLM si `user_message` décrit une action différée ou
+    récurrente plutôt qu'une demande immédiate (agent/schedule_intent.py). Si
+    oui, crée directement l'automatisation (comme un appel à POST
+    /automations — pas de validation humaine à cette étape, cf.
+    docs/phase3/02-*). Si l'intention n'est pas de la planification, ou si la
+    détection échoue, retourne None : l'appelant retombe sur le plan/chat
+    immédiat (Phase 2), inchangé."""
+    try:
+        intent = schedule_intent.detect_schedule_intent(user_message, datetime.now(timezone.utc))
+    except Exception:
+        logger.exception("Échec de la détection d'intention de planification, retour au flux immédiat.")
+        return None
+
+    if not intent.scheduled:
+        return None
+
+    return automation_store.create_automation(
+        db,
+        user_id=user.id,
+        name=intent.name or user_message[:60],
+        schedule=intent.cron,
+        task=intent.task or user_message,
+    )
 
 
 def _maybe_create_plan(db: Session, user: User, session_id: str, user_message: str) -> Plan | None:
@@ -70,11 +102,16 @@ def _maybe_create_plan(db: Session, user: User, session_id: str, user_message: s
 
 
 def handle_chat_or_plan(db: Session, session_id: str, user_message: str, user_id: str | None = None) -> dict:
-    """Point d'entrée Phase 2 pour /chat : décide d'abord si un plan d'action
-    est nécessaire. Si oui, le persiste et le renvoie (en attente
-    d'approbation) sans appeler le LLM de chat. Sinon, comportement Phase 1
+    """Point d'entrée Phase 2/3 pour /chat : décide d'abord si le message
+    programme une automatisation (Phase 3), puis si un plan d'action immédiat
+    est nécessaire (Phase 2). Si ni l'un ni l'autre, comportement Phase 1
     inchangé via handle_chat()."""
     user = get_or_create_user(db, user_id)
+
+    automation = _maybe_create_automation(db, user, user_message)
+    if automation is not None:
+        short_term.append_message(session_id, "user", user_message)
+        return {"type": "automation", "automation": automation}
 
     plan = _maybe_create_plan(db, user, session_id, user_message)
     if plan is not None:
@@ -86,14 +123,20 @@ def handle_chat_or_plan(db: Session, session_id: str, user_message: str, user_id
 
 
 def stream_chat_or_plan(session_id: str, user_message: str, user_id: str | None = None) -> Iterator[str]:
-    """Équivalent streaming de handle_chat_or_plan. Si un plan est nécessaire,
-    yield un unique chunk (marqueur + id du plan) et s'arrête — sinon délègue
-    entièrement à stream_chat(), inchangé."""
+    """Équivalent streaming de handle_chat_or_plan. Si une automatisation ou un
+    plan est nécessaire, yield un unique chunk (marqueur + id) et s'arrête —
+    sinon délègue entièrement à stream_chat(), inchangé."""
     db = SessionLocal()
     try:
         user = get_or_create_user(db, user_id)
-        plan = _maybe_create_plan(db, user, session_id, user_message)
 
+        automation = _maybe_create_automation(db, user, user_message)
+        if automation is not None:
+            short_term.append_message(session_id, "user", user_message)
+            yield f"{AUTOMATION_MARKER}{automation.id}"
+            return
+
+        plan = _maybe_create_plan(db, user, session_id, user_message)
         if plan is not None:
             short_term.append_message(session_id, "user", user_message)
             yield f"{PLAN_MARKER}{plan.id}"
