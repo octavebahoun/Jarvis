@@ -67,6 +67,19 @@ def test_detect_schedule_intent_strips_markdown_code_fence(monkeypatch):
     assert intent.scheduled is False
 
 
+def test_detect_schedule_intent_ignores_trailing_garbage_after_valid_json(monkeypatch):
+    content = (
+        '{"scheduled": true, "recurring": false, "cron": "32 14 29 7 *", '
+        '"name": "Recherche IA", "task": "cherche les news IA"}]'
+    )
+    monkeypatch.setattr(schedule_intent.reasoning, "_get_llm", lambda: _FakeLLM(content))
+
+    intent = schedule_intent.detect_schedule_intent("cherche les news IA dans 2 min", NOW)
+
+    assert intent.scheduled is True
+    assert intent.cron == "32 14 29 7 *"
+
+
 def test_detect_schedule_intent_raises_on_invalid_json(monkeypatch):
     monkeypatch.setattr(schedule_intent.reasoning, "_get_llm", lambda: _FakeLLM("ceci n'est pas du JSON"))
 

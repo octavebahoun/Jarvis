@@ -47,6 +47,22 @@ def test_build_plan_strips_markdown_code_fence(monkeypatch):
     assert plan.steps == []
 
 
+def test_build_plan_ignores_trailing_garbage_after_valid_json(monkeypatch):
+    """Certains modèles gratuits ajoutent un fragment parasite après un JSON
+    par ailleurs valide (ex. un crochet fermant en trop) — vu en conditions
+    réelles (worker, automatisation Phase 3)."""
+    content = (
+        '{"steps": [{"tool": "web_search", "description": "Recherche X", '
+        '"args": {"query": "x"}}]}]'
+    )
+    monkeypatch.setattr(planner.reasoning, "_get_llm", lambda: _FakeLLM(content))
+
+    plan = planner.build_plan("Cherche X")
+
+    assert len(plan.steps) == 1
+    assert plan.steps[0].tool == "web_search"
+
+
 def test_build_plan_raises_on_invalid_json(monkeypatch):
     monkeypatch.setattr(planner.reasoning, "_get_llm", lambda: _FakeLLM("ceci n'est pas du JSON"))
 

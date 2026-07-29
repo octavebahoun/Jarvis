@@ -56,7 +56,7 @@ def detect_schedule_intent(goal: str, now: datetime) -> ScheduleIntent:
     raw = reasoning.strip_json_code_fence(str(response.content))
 
     try:
-        payload = json.loads(raw)
+        payload = reasoning.parse_json_object(raw)
         intent = ScheduleIntent.model_validate(payload)
     except (json.JSONDecodeError, ValidationError) as exc:
         raise ScheduleIntentError(f"Réponse non conforme au format attendu : {raw!r}") from exc

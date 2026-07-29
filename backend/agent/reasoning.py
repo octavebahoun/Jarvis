@@ -1,3 +1,4 @@
+import json
 from collections.abc import Iterator
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
@@ -60,6 +61,18 @@ def strip_json_code_fence(text: str) -> str:
         if text.endswith("```"):
             text = text.rsplit("```", 1)[0]
     return text.strip()
+
+
+def parse_json_object(text: str) -> dict:
+    """Parse le premier objet JSON valide en tête de `text`, en ignorant tout
+    contenu superflu après (certains modèles — notamment les modèles gratuits
+    OpenRouter — ajoutent parfois un fragment parasite après un JSON par
+    ailleurs valide, ex. un crochet fermant en trop ; `json.loads` rejette ça
+    en bloc alors que le JSON utile est parfaitement lisible). Appeler
+    `strip_json_code_fence` avant : `raw_decode` ne tolère pas d'espace/retour
+    à la ligne en tête, contrairement à `json.loads`."""
+    obj, _ = json.JSONDecoder().raw_decode(text)
+    return obj
 
 
 def generate_reply(messages: list[BaseMessage]) -> str:
