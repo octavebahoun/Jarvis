@@ -13,3 +13,4 @@ Ordre de lecture recommandé :
 9. [09-fix-networking-docker-compose.md](./09-fix-networking-docker-compose.md)
 10. [10-fix-imports-celery-worker.md](./10-fix-imports-celery-worker.md)
 11. [11-fix-pull-image-manquante.md](./11-fix-pull-image-manquante.md)
+12. [12-synthese-finale-du-plan.md](./12-synthese-finale-du-plan.md)

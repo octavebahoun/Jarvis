@@ -57,6 +57,41 @@ def test_execute_plan_runs_all_steps_and_marks_plan_done(db_session, sandbox):
     assert result.steps[1].result == "contenu b"
 
 
+def test_execute_plan_generates_summary_from_step_results(db_session, sandbox, monkeypatch):
+    monkeypatch.setattr(executor.reasoning, "generate_reply", lambda messages: "Voici le résumé du fichier a.")
+
+    (sandbox / "a.txt").write_text("contenu a", encoding="utf-8")
+    plan = _make_plan(
+        db_session,
+        steps=[{"tool": "file_reader", "description": "lire a", "args": {"path": "a.txt"}}],
+    )
+    task_store.set_plan_status(db_session, plan, "approved")
+
+    result = executor.execute_plan(db_session, plan)
+
+    assert result.status == "done"
+    assert result.summary == "Voici le résumé du fichier a."
+
+
+def test_execute_plan_stays_done_when_summary_generation_fails(db_session, sandbox, monkeypatch):
+    def _boom(messages):
+        raise RuntimeError("LLM indisponible")
+
+    monkeypatch.setattr(executor.reasoning, "generate_reply", _boom)
+
+    (sandbox / "a.txt").write_text("contenu a", encoding="utf-8")
+    plan = _make_plan(
+        db_session,
+        steps=[{"tool": "file_reader", "description": "lire a", "args": {"path": "a.txt"}}],
+    )
+    task_store.set_plan_status(db_session, plan, "approved")
+
+    result = executor.execute_plan(db_session, plan)
+
+    assert result.status == "done"  # les résultats bruts par étape restent disponibles
+    assert result.summary is None
+
+
 def test_execute_plan_stops_on_first_failure(db_session, sandbox):
     (sandbox / "a.txt").write_text("contenu a", encoding="utf-8")
 

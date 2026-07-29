@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 import TaskStatus from "@/components/TaskStatus";
 import ToolCallCard from "@/components/ToolCallCard";
@@ -86,6 +87,12 @@ export default function PlanViewer({ planId }: { planId: string }) {
           <ToolCallCard key={step.id} step={step} />
         ))}
       </div>
+
+      {plan.summary && (
+        <div className="prose prose-invert prose-sm mt-3 max-w-none border-t border-zinc-700/70 pt-3 prose-p:my-1 prose-p:first:mt-0 prose-p:last:mb-0">
+          <ReactMarkdown>{plan.summary}</ReactMarkdown>
+        </div>
+      )}
 
       {plan.status === "pending" && (
         <button

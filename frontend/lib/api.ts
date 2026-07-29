@@ -137,6 +137,7 @@ export interface PlanResponse {
   session_id: string;
   goal: string;
   status: string;
+  summary: string | null;
   steps: PlanStepResponse[];
 }
 

@@ -17,6 +17,7 @@ class PlanResponse(BaseModel):
     session_id: str
     goal: str
     status: str
+    summary: str | None = None
     steps: list[PlanStepResponse]
 
 
@@ -26,6 +27,7 @@ def plan_to_response(plan: Plan) -> PlanResponse:
         session_id=plan.session_id,
         goal=plan.goal,
         status=plan.status,
+        summary=plan.summary,
         steps=[
             PlanStepResponse(
                 id=step.id,

@@ -65,6 +65,11 @@ class Plan(Base):
     goal: Mapped[str] = mapped_column(Text)
     # pending (en attente de validation) -> approved -> running -> done | failed
     status: Mapped[str] = mapped_column(String, default="pending")
+    # Synthèse en langage naturel des résultats, générée une fois le plan
+    # "done" (voir agent/executor.py). None si le plan a échoué ou si la
+    # synthèse elle-même a échoué (les résultats bruts par étape restent
+    # disponibles dans tous les cas).
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     steps: Mapped[list["PlanStep"]] = relationship(

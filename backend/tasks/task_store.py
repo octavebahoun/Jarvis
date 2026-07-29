@@ -34,6 +34,13 @@ def set_plan_status(db: Session, plan: Plan, status: str) -> Plan:
     return plan
 
 
+def set_plan_summary(db: Session, plan: Plan, summary: str) -> Plan:
+    plan.summary = summary
+    db.commit()
+    db.refresh(plan)
+    return plan
+
+
 def set_step_result(
     db: Session,
     step: PlanStep,
