@@ -47,7 +47,7 @@ def build_plan(goal: str) -> ProposedPlan:
     raw = reasoning.strip_json_code_fence(str(response.content))
 
     try:
-        payload = json.loads(raw)
+        payload = reasoning.parse_json_object(raw)
         plan = ProposedPlan.model_validate(payload)
     except (json.JSONDecodeError, ValidationError) as exc:
         raise PlannerError(f"Réponse du planner non conforme au format attendu : {raw!r}") from exc
