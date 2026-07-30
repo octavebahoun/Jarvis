@@ -169,5 +169,4 @@ Prérequis : `docker compose build browser-sandbox-image` (si pas déjà fait) +
 ## Après le passage complet
 
 Si tout est coché : la Phase 2 est validée de bout en bout avec la vraie
-stack (critère de merge de `phase2.md`). Note ici ce qui a échoué, sinon on
-corrige avant de considérer que c'est fini.
+stack (critère de merge de `phase2.md`).
