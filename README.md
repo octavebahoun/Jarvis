@@ -1,9 +1,35 @@
+<div align="center">
+
 # Jarvis
 
-Agent IA personnel, construit par phases : un cœur de conversation avec
-mémoire et profil (Phase 1), puis un agent capable de raisonner, planifier et
-agir via des outils sandboxés (Phase 2). Les phases suivantes (automatisation,
-dashboard, voix) sont planifiées mais non commencées.
+**Agent IA personnel, construit par phases.**
+
+Un cœur de conversation avec mémoire et profil, puis un agent capable de
+raisonner, planifier et agir via des outils sandboxés.
+
+![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?logo=fastapi&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-Frontend-000000?logo=nextdotjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Base%20de%20donn%C3%A9es-4169E1?logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Cache-DC382D?logo=redis&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+
+![Phase 1](https://img.shields.io/badge/Phase%201-Termin%C3%A9-059669)
+![Phase 2](https://img.shields.io/badge/Phase%202-Termin%C3%A9-059669)
+![Phase 3](https://img.shields.io/badge/Phase%203-Planifi%C3%A9-94a3b8)
+![Phase 4](https://img.shields.io/badge/Phase%204-Planifi%C3%A9-94a3b8)
+
+</div>
+
+## Sommaire
+
+- [Vision](#vision)
+- [Architecture](#architecture)
+- [Stack technique](#stack-technique)
+- [État du projet](#état-du-projet)
+- [Démarrage rapide](#démarrage-rapide)
+- [Structure du projet](#structure-du-projet)
+- [Sécurité et validation humaine](#sécurité-et-validation-humaine)
 
 ## Vision
 
@@ -53,17 +79,58 @@ outils, contrôleur) est dans [`architecture.md`](./architecture.md).
 
 ## Stack technique
 
-| Couche | Technologie |
-|---|---|
-| Frontend | Next.js, React, Tailwind CSS |
-| API | FastAPI, Pydantic v2 |
-| Agent / raisonnement | LangChain, OpenAI ou OpenRouter (modèles gratuits `:free`) |
-| Base relationnelle | PostgreSQL, SQLAlchemy 2.0, Alembic |
-| Mémoire court terme | Redis |
-| Mémoire vectorielle (RAG) | ChromaDB, embeddings OpenAI ou MiniLM local (gratuit) |
-| Tâches asynchrones | Celery + Redis |
-| Sandbox d'exécution | Docker (SDK Python) |
-| Tests | pytest, Playwright |
+<table>
+<thead>
+<tr><th>Couche</th><th>Technologie</th><th>Rôle</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Frontend</td>
+<td><img src="https://img.shields.io/badge/Next.js-000000?logo=nextdotjs&logoColor=white" alt="Next.js"/> <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS"/></td>
+<td>Interface chat, profil, mémoire, suivi de plans</td>
+</tr>
+<tr>
+<td>API</td>
+<td><img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI"/> <img src="https://img.shields.io/badge/Pydantic_v2-E92063?logo=pydantic&logoColor=white" alt="Pydantic"/></td>
+<td>Routes REST, streaming, validation des schémas</td>
+</tr>
+<tr>
+<td>Agent / raisonnement</td>
+<td><img src="https://img.shields.io/badge/LangChain-1C3C3C" alt="LangChain"/> <img src="https://img.shields.io/badge/OpenAI_%2F_OpenRouter-412991?logo=openai&logoColor=white" alt="OpenAI / OpenRouter"/></td>
+<td>Prompting, planification, modèles gratuits <code>:free</code> possibles</td>
+</tr>
+<tr>
+<td>Base relationnelle</td>
+<td><img src="https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL"/> <img src="https://img.shields.io/badge/SQLAlchemy_2.0-D71F00" alt="SQLAlchemy"/> <img src="https://img.shields.io/badge/Alembic-6BA81E" alt="Alembic"/></td>
+<td>Utilisateurs, faits, messages, plans — migrations versionnées</td>
+</tr>
+<tr>
+<td>Mémoire court terme</td>
+<td><img src="https://img.shields.io/badge/Redis-DC382D?logo=redis&logoColor=white" alt="Redis"/></td>
+<td>Historique de conversation (TTL)</td>
+</tr>
+<tr>
+<td>Mémoire vectorielle</td>
+<td><img src="https://img.shields.io/badge/ChromaDB-FF6F00" alt="ChromaDB"/></td>
+<td>RAG — embeddings OpenAI ou MiniLM local (gratuit)</td>
+</tr>
+<tr>
+<td>Tâches asynchrones</td>
+<td><img src="https://img.shields.io/badge/Celery-37814A?logo=celery&logoColor=white" alt="Celery"/></td>
+<td>Exécution des plans approuvés, hors requête HTTP</td>
+</tr>
+<tr>
+<td>Sandbox d'exécution</td>
+<td><img src="https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white" alt="Docker"/></td>
+<td>Containers jetables pour les outils sensibles</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><img src="https://img.shields.io/badge/pytest-0A9EDC?logo=pytest&logoColor=white" alt="pytest"/> <img src="https://img.shields.io/badge/Playwright-2EAD33?logo=playwright&logoColor=white" alt="Playwright"/></td>
+<td>Suite backend + vérification fonctionnelle navigateur</td>
+</tr>
+</tbody>
+</table>
 
 Les fournisseurs de LLM et d'embeddings sont interchangeables par variable
 d'environnement (`CHAT_PROVIDER`, `EMBEDDING_PROVIDER`) — aucune dépendance
@@ -99,24 +166,54 @@ stricte à une API payante pour faire tourner le projet.
   <text x="630" y="112" text-anchor="middle" font-size="10" font-family="Helvetica, Arial, sans-serif" fill="#94a3b8">Planifie</text>
 </svg>
 
-**Phase 1 — chat, mémoire, profil.** Chat avec streaming, mémoire court terme
-(Redis), long terme (faits en base) et vectorielle (RAG via Chroma), profil
-utilisateur, dégradation propre en cas de panne LLM ou mémoire. Journal
-détaillé : [`docs/phase1/`](./docs/phase1/).
+<table>
+<tr>
+<td valign="top" width="50%">
 
-**Phase 2 — agent, outils, plans.** Le planificateur décide, via le LLM, si
-une demande nécessite des outils (recherche web, lecture de fichiers,
-exécution de code, navigation web) ou reste une simple conversation. Un plan
-proposé doit être **validé explicitement** avant exécution ; chaque outil
-sensible tourne dans un container Docker jetable, sans accès réseau sauf
-quand strictement nécessaire, avec suppression garantie et timeout strict.
-Une synthèse en langage naturel est produite une fois le plan terminé.
-Journal détaillé : [`docs/phase2/`](./docs/phase2/).
+**Phase 1 — chat, mémoire, profil** ![Termine](https://img.shields.io/badge/-Termin%C3%A9-059669)
 
-**Phases 3 et 4 — planifiées.** Automatisation de tâches récurrentes et
-dashboard de contrôle (Phase 3), puis interface vocale et contrôle du système
-(Phase 4). Non commencées ; voir [`phase3.md`](./phase3.md) et
-[`phase4.md`](./phase4.md).
+Chat avec streaming, mémoire court terme (Redis), long terme (faits en base)
+et vectorielle (RAG via Chroma), profil utilisateur, dégradation propre en
+cas de panne LLM ou mémoire.
+
+Journal détaillé : [`docs/phase1/`](./docs/phase1/)
+
+</td>
+<td valign="top" width="50%">
+
+**Phase 2 — agent, outils, plans** ![Termine](https://img.shields.io/badge/-Termin%C3%A9-059669)
+
+Le planificateur décide, via le LLM, si une demande nécessite des outils
+(recherche web, lecture de fichiers, exécution de code, navigation web) ou
+reste une simple conversation. Un plan proposé doit être **validé
+explicitement** avant exécution ; chaque outil sensible tourne dans un
+container Docker jetable. Une synthèse en langage naturel est produite une
+fois le plan terminé.
+
+Journal détaillé : [`docs/phase2/`](./docs/phase2/)
+
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+
+**Phase 3 — automatisation, dashboard** ![Planifie](https://img.shields.io/badge/-Planifi%C3%A9-94a3b8)
+
+Déclenchement automatique de tâches planifiées, intégrations externes
+(GitHub, Notion, calendrier), dashboard de suivi. Non commencée — voir
+[`phase3.md`](./phase3.md).
+
+</td>
+<td valign="top" width="50%">
+
+**Phase 4 — voix, contrôle OS** ![Planifie](https://img.shields.io/badge/-Planifi%C3%A9-94a3b8)
+
+Interface vocale (entrée/sortie), contrôle du système d'exploitation,
+coordination multi-agents. Non commencée — voir [`phase4.md`](./phase4.md).
+
+</td>
+</tr>
+</table>
 
 ## Démarrage rapide
 
@@ -145,6 +242,9 @@ Détails d'installation, de configuration et de tests par composant :
 
 ## Structure du projet
 
+<details>
+<summary>Voir l'arborescence</summary>
+
 ```
 Jarvis/
 ├── backend/         API FastAPI, agent, mémoire, outils, tâches Celery
@@ -158,6 +258,8 @@ Jarvis/
 ├── architecture.md   Détail des couches du système
 └── phase1.md … phase4.md   Spécifications de chaque phase
 ```
+
+</details>
 
 ## Sécurité et validation humaine
 
