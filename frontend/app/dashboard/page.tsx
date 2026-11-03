@@ -69,7 +69,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-linear-to-b from-zinc-950 via-zinc-900 to-black text-zinc-100">
       <div className="mx-auto w-full max-w-3xl px-6 py-8">
         <header className="mb-6 flex items-center justify-between">
-          <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">
+          <Link href="/projet" className="text-sm text-zinc-400 hover:text-zinc-200">
             ← Retour
           </Link>
           <span className="text-sm tracking-wide text-zinc-300">JARVIS · Dashboard</span>

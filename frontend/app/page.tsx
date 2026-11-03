@@ -1,400 +1,306 @@
+import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
+import {
+  DEPOTS,
+  DOCS,
+  LIENS,
+  VIDEO_EMBED,
+  VIDEO_URL,
+  type Lien,
+} from "@/lib/liens-demo";
 
-function NeuralFace() {
-  const baseNodes = [
-    { x: 110, y: 80 },
-    { x: 160, y: 60 },
-    { x: 210, y: 80 },
-    { x: 125, y: 95 },
-    { x: 195, y: 95 },
-    { x: 90, y: 140 },
-    { x: 115, y: 135 },
-    { x: 140, y: 130 },
-    { x: 165, y: 128 },
-    { x: 190, y: 130 },
-    { x: 215, y: 135 },
-    { x: 230, y: 145 },
-    { x: 82, y: 178 },
-    { x: 102, y: 176 },
-    { x: 128, y: 176 },
-    { x: 160, y: 174 },
-    { x: 192, y: 176 },
-    { x: 218, y: 176 },
-    { x: 238, y: 178 },
-    { x: 105, y: 210 },
-    { x: 128, y: 214 },
-    { x: 155, y: 200 },
-    { x: 180, y: 204 },
-    { x: 205, y: 210 },
-    { x: 223, y: 214 },
-    { x: 95, y: 245 },
-    { x: 125, y: 252 },
-    { x: 160, y: 256 },
-    { x: 195, y: 252 },
-    { x: 225, y: 245 },
-    { x: 120, y: 275 },
-    { x: 170, y: 290 },
-    { x: 220, y: 275 },
-  ];
+export const metadata: Metadata = {
+  title: "Démo O-jarvis — Jarvis sur Ubuntu",
+  description:
+    "La vidéo, le téléchargement et le code d'O-jarvis et d'O-jarvis Shell : un assistant qui agit sur le terminal, Chrome et le bureau, toujours avec votre accord.",
+};
 
-  const noise = (seed: number) => {
-    const x = Math.sin(seed * 12.9898) * 43758.5453123;
-    return x - Math.floor(x);
-  };
+const externe = { target: "_blank", rel: "noreferrer" } as const;
 
-  const nodes = baseNodes.map((node, i) => {
-    const dx = (noise(i + 1) - 0.5) * 8;
-    const dy = (noise(i + 97) - 0.5) * 8;
-    return {
-      x: node.x + dx,
-      y: node.y + dy,
-    };
-  });
+const bouton =
+  "rounded-full px-6 py-3 font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-300";
+const boutonPlein = `${bouton} bg-cyan-400 text-zinc-950 hover:bg-cyan-300`;
+const boutonVide = `${bouton} border border-zinc-600 text-zinc-100 hover:border-zinc-400 hover:bg-zinc-800`;
 
-  const links: Array<[number, number]> = [];
-  const seen = new Set<string>();
+const LIEUX = [
+  {
+    titre: "Dans le terminal",
+    texte:
+      "o-jarvis-shell s'ouvre dans n'importe quel dossier. Il lit tout de suite (fichiers, git, df…) et propose les commandes qui changent quelque chose.",
+  },
+  {
+    titre: "Dans Chrome",
+    texte:
+      "Une extension met Jarvis à côté de la page que vous lisez : il la résume, clique ou remplit les champs de votre onglet.",
+  },
+  {
+    titre: "Sur le bureau",
+    texte:
+      "SAM 3.1 repère les boutons de n'importe quelle application ; Jarvis clique le bon par le portail de GNOME, et vous voyez le pointeur y aller.",
+  },
+];
 
-  nodes.forEach((node, i) => {
-    const neighbors = nodes
-      .map((other, j) => ({
-        j,
-        d:
-          i === j
-            ? Number.POSITIVE_INFINITY
-            : Math.hypot(node.x - other.x, node.y - other.y),
-      }))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, i < 18 ? 4 : 3);
+const NIVEAUX = [
+  {
+    nom: "Lecture",
+    regle: "s'exécute tout de suite",
+    couleur: "text-cyan-300 border-cyan-400/40 bg-cyan-400/10",
+  },
+  {
+    nom: "Action",
+    regle: "attend votre « o »",
+    couleur: "text-amber-300 border-amber-400/40 bg-amber-400/10",
+  },
+  {
+    nom: "Destruction",
+    regle: "demande « oui » tapé en entier",
+    couleur: "text-rose-300 border-rose-400/40 bg-rose-400/10",
+  },
+];
 
-    neighbors.forEach(({ j }) => {
-      const a = Math.min(i, j);
-      const b = Math.max(i, j);
-      const key = `${a}-${b}`;
-      if (!seen.has(key)) {
-        seen.add(key);
-        links.push([a, b]);
-      }
-    });
-  });
+const CAPTURES = [
+  { src: "/demo/accueil.webp", legende: "L'accueil : la sphère montre l'état de Jarvis." },
+  { src: "/demo/automatisations.webp", legende: "Rappels et tâches qui survivent au redémarrage." },
+  { src: "/demo/skills-et-plugins.webp", legende: "Skills testés en bac à sable et serveurs MCP." },
+];
 
-  const noiseParticles = Array.from({ length: 70 }, (_, i) => {
-    const x = 50 + noise(i * 3 + 11) * 220;
-    const y = 46 + noise(i * 7 + 29) * 280;
-    const r = 0.6 + noise(i * 13 + 43) * 1.6;
+const ETAPES = [
+  {
+    titre: "Téléchargez le .deb",
+    code: "sudo apt install ./O-jarvis_*_amd64.deb",
+    note: "Il installe l'application, O-jarvis Shell et l'extension Chrome.",
+  },
+  {
+    titre: "Ouvrez l'application une fois",
+    code: "o-jarvis",
+    note: "L'écran d'accueil demande vos clés et les permissions de GNOME.",
+  },
+  {
+    titre: "Parlez-lui depuis un dossier",
+    code: "cd ~/mon-projet && o-jarvis-shell",
+    note: "Puis demandez : « Combien d'espace reste-t-il sur le disque ? »",
+  },
+];
 
-    return {
-      x,
-      y,
-      r,
-      delay: `${(noise(i * 17 + 59) * 2.5).toFixed(2)}s`,
-      duration: `${(1.6 + noise(i * 19 + 71) * 2.8).toFixed(2)}s`,
-      opacity: 0.12 + noise(i * 23 + 83) * 0.4,
-    };
-  });
-
+function Titre({ sur, children }: { sur: string; children: React.ReactNode }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-cyan-400/30 bg-zinc-950/70 p-4 shadow-2xl">
-      <div className="absolute inset-0 bg-radial-[circle_at_center] from-cyan-400/10 via-transparent to-transparent" />
-      <div className="neural-scan absolute inset-x-4 h-8 rounded-full bg-cyan-300/10 blur-md" />
-
-      <svg viewBox="0 0 320 380" className="relative h-auto w-full">
-        <defs>
-          <linearGradient id="jarvisStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#22d3ee" />
-            <stop offset="100%" stopColor="#a78bfa" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="2.8" result="blur" />
-            <feMerge>
-              <feMergeNode in="blur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        <path
-          d="M160 28
-             C230 28 280 78 280 160
-             C280 255 222 335 160 350
-             C98 335 40 255 40 160
-             C40 78 90 28 160 28Z"
-          fill="none"
-          stroke="url(#jarvisStroke)"
-          strokeWidth="2.5"
-          opacity="0.9"
-          filter="url(#glow)"
-        />
-
-        {noiseParticles.map((p, i) => (
-          <circle
-            key={`noise-${i}`}
-            className="neural-noise"
-            cx={p.x}
-            cy={p.y}
-            r={p.r}
-            fill="#a5f3fc"
-            opacity={p.opacity}
-            style={{
-              animationDelay: p.delay,
-              animationDuration: p.duration,
-            }}
-          />
-        ))}
-
-        <ellipse
-          className="neural-eye"
-          cx="125"
-          cy="170"
-          rx="22"
-          ry="8"
-          fill="#22d3ee"
-          opacity="0.7"
-        />
-        <ellipse
-          className="neural-eye"
-          cx="195"
-          cy="170"
-          rx="22"
-          ry="8"
-          fill="#22d3ee"
-          opacity="0.7"
-        />
-
-        {links.map(([a, b], i) => (
-          <line
-            key={i}
-            x1={nodes[a].x}
-            y1={nodes[a].y}
-            x2={nodes[b].x}
-            y2={nodes[b].y}
-            stroke="url(#jarvisStroke)"
-            strokeOpacity={0.18 + ((i % 7) / 7) * 0.34}
-            strokeWidth={0.9 + (i % 3) * 0.32}
-          />
-        ))}
-
-        {nodes.map((n, i) => (
-          <circle
-            key={i}
-            className="neural-node"
-            cx={n.x}
-            cy={n.y}
-            r={i % 5 === 0 ? 4.6 : i % 2 === 0 ? 3.4 : 2.7}
-            fill="#67e8f9"
-            opacity={0.72 + ((i % 4) / 4) * 0.25}
-            filter="url(#glow)"
-            style={{ animationDelay: `${i * 0.15}s` }}
-          />
-        ))}
-      </svg>
-
-      <p className="mt-2 text-center text-xs tracking-[0.2em] text-cyan-300/90">
-        JARVIS NEURAL SIGNATURE
-      </p>
+    <div className="mb-6">
+      <p className="mb-2 text-sm uppercase tracking-[0.25em] text-cyan-300">{sur}</p>
+      <h2 className="text-2xl font-bold text-zinc-100 sm:text-3xl">{children}</h2>
     </div>
   );
 }
 
-export default function Home() {
+function CarteLien({ lien }: { lien: Lien }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-linear-to-b from-zinc-950 via-zinc-900 to-black text-zinc-100">
+    <a
+      href={lien.href}
+      {...externe}
+      className="group rounded-2xl border border-zinc-700/70 bg-zinc-900/60 p-5 transition hover:-translate-y-1 hover:border-cyan-400/40"
+    >
+      <p className="font-semibold text-zinc-100">
+        {lien.titre}{" "}
+        <span aria-hidden className="text-cyan-300 transition group-hover:translate-x-1">
+          ↗
+        </span>
+      </p>
+      <p className="mt-1 text-sm text-zinc-400">{lien.texte}</p>
+    </a>
+  );
+}
+
+export default function Demo() {
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-linear-to-b from-zinc-950 via-zinc-900 to-black font-[family-name:var(--font-geist-sans)] text-zinc-100">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-cyan-500/20 blur-3xl" />
-        <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-violet-500/10 blur-3xl" />
-        <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-emerald-500/10 blur-3xl" />
+        <div className="absolute right-0 top-1/3 h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
       </div>
 
-      <main className="relative mx-auto flex w-full max-w-6xl flex-col px-6 py-10 md:px-10 lg:px-16">
-        <header className="mb-16 flex flex-wrap items-center justify-between gap-3">
+      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-20 px-4 py-10 sm:px-6 md:px-10 lg:px-16">
+        <header className="flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex items-center gap-3 rounded-full border border-zinc-700/70 bg-zinc-900/70 px-4 py-2 backdrop-blur">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-            <span className="text-sm tracking-wide text-zinc-200">
-              JARVIS · Double Numérique Intelligent
-            </span>
+            <span className="text-sm tracking-wide text-zinc-200">O-jarvis · Démo</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/demo"
-              className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-cyan-300"
-            >
-              Voir la démo
-            </Link>
-            <a
-              href="#roadmap"
-              className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-800"
-            >
-              Voir la roadmap
-            </a>
-          </div>
+          <Link
+            href="/projet"
+            className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-800"
+          >
+            ← Le projet Jarvis
+          </Link>
         </header>
 
-        <section className="mb-20 grid gap-10 lg:grid-cols-2 lg:items-center">
+        <section className="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
           <div>
             <p className="mb-4 text-sm uppercase tracking-[0.25em] text-cyan-300">
-              Assistant IA personnel
+              Assistant personnel pour Ubuntu
             </p>
-            <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-              Construire un{" "}
-              <span className="text-cyan-300">Jarvis réaliste</span>,
-              <br />
-              progressif et contrôlé.
+            <h1 className="mb-6 text-4xl font-bold leading-tight sm:text-5xl">
+              Jarvis ne fait pas que parler. <span className="text-cyan-300">Il agit</span>, avec
+              votre accord.
             </h1>
             <p className="mb-8 max-w-xl text-lg text-zinc-300">
-              Une IA qui mémorise votre contexte, raisonne selon votre style,
-              propose des plans d’action et exécute les tâches avec validation
-              humaine.
+              Sur votre terminal, votre Chrome et votre bureau. O-jarvis Shell n&apos;appelle que des
+              modèles Meta : Muse Spark répond, SAM 3.1 trouve où cliquer, les voix MMS parlent sur
+              votre processeur.
             </p>
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/chat"
-                className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-300"
-              >
-                Ouvrir le chat
-              </Link>
-              <Link
-                href="/dashboard"
-                className="rounded-full border border-zinc-600 px-6 py-3 font-semibold text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800"
-              >
-                Dashboard
-              </Link>
-              <a
-                href="#vision"
-                className="rounded-full border border-zinc-600 px-6 py-3 font-semibold text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800"
-              >
-                Découvrir Jarvis
+            <div className="flex flex-wrap gap-3">
+              <a href="#video" className={boutonPlein}>
+                Voir la vidéo
               </a>
-              <a
-                href="#architecture"
-                className="rounded-full border border-zinc-600 px-6 py-3 font-semibold text-zinc-100 transition hover:border-zinc-400 hover:bg-zinc-800"
-              >
-                Architecture
+              <a href={LIENS.shellDeb} {...externe} className={boutonVide}>
+                Télécharger le .deb
+              </a>
+              <a href={LIENS.shell} {...externe} className={boutonVide}>
+                Code source
               </a>
             </div>
           </div>
-
-          <div className="space-y-4">
-            <NeuralFace />
-
-            <div className="rounded-3xl border border-zinc-700/70 bg-zinc-900/70 p-6 shadow-2xl backdrop-blur">
-              <p className="mb-4 text-sm text-zinc-400">PROMESSE PRODUIT</p>
-              <div className="space-y-3">
-                {[
-                  "Comprendre l’utilisateur et son contexte",
-                  "Mémoriser court terme, long terme et sémantique (RAG)",
-                  "Planifier et exécuter des actions utiles",
-                  "Évoluer en continu grâce aux interactions",
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-start gap-3 rounded-xl bg-zinc-800/70 p-3"
-                  >
-                    <span className="mt-1 h-2 w-2 rounded-full bg-cyan-300" />
-                    <p className="text-zinc-200">{item}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <Image
+            src="/demo/accueil.webp"
+            alt="Accueil d'O-jarvis : une sphère de points lumineux, « Jarvis est prêt »"
+            width={1440}
+            height={900}
+            priority
+            className="rounded-3xl border border-cyan-400/30 shadow-2xl"
+          />
         </section>
 
-        <section id="vision" className="mb-16 grid gap-4 md:grid-cols-3">
-          {[
-            {
-              title: "Raisonnement personnalisé",
-              text: "Analyse des problèmes selon votre logique pour proposer des réponses cohérentes et actionnables.",
-            },
-            {
-              title: "Mémoire augmentée",
-              text: "Conservation du contexte et rappel intelligent via PostgreSQL, Redis et ChromaDB.",
-            },
-            {
-              title: "Agent semi-autonome",
-              text: "Jarvis agit avec validation explicite pour garantir sécurité, contrôle et traçabilité.",
-            },
-          ].map((card) => (
-            <article
-              key={card.title}
-              className="rounded-2xl border border-zinc-700/70 bg-zinc-900/60 p-6 transition hover:-translate-y-1 hover:border-cyan-400/40"
-            >
-              <h2 className="mb-2 text-xl font-semibold text-zinc-100">
-                {card.title}
-              </h2>
-              <p className="text-zinc-300">{card.text}</p>
-            </article>
-          ))}
-        </section>
-
-        <section
-          id="architecture"
-          className="mb-16 rounded-3xl border border-zinc-700/60 bg-zinc-900/70 p-8"
-        >
-          <h2 className="mb-6 text-2xl font-bold text-zinc-100">
-            Architecture cible
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              "Identity Core",
-              "Memory System",
-              "Reasoning Engine",
-              "Planner",
-              "Tool System",
-              "Agent Controller",
-            ].map((item) => (
-              <div
-                key={item}
-                className="rounded-xl border border-zinc-700 bg-zinc-800/60 px-4 py-3 text-zinc-200"
-              >
-                {item}
-              </div>
-            ))}
+        <section id="video" className="scroll-mt-8">
+          <Titre sur="La démo">2 min 56, sur un vrai Ubuntu, avec les vrais modèles</Titre>
+          <div className="overflow-hidden rounded-3xl border border-zinc-700/70 bg-black shadow-2xl">
+            <iframe
+              src={VIDEO_EMBED}
+              title="Vidéo de démonstration d'O-jarvis Shell"
+              loading="lazy"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+              className="aspect-video w-full"
+            />
           </div>
-          <p className="mt-5 text-zinc-400">
-            Stack prévue : FastAPI, LangChain/OpenAI, PostgreSQL, Redis,
-            ChromaDB, Next.js + Tailwind.
+          <p className="mt-3 text-sm text-zinc-400">
+            La vidéo ne se lance pas ?{" "}
+            <a href={VIDEO_URL} {...externe} className="text-cyan-300 underline-offset-4 hover:underline">
+              Ouvrez-la sur YouTube
+            </a>
+            .
           </p>
         </section>
 
-        <section id="roadmap" className="mb-14">
-          <h2 className="mb-6 text-2xl font-bold">Roadmap de construction</h2>
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              [
-                "Phase 1",
-                "MVP",
-                "Chat intelligent, mémoire vectorielle, personnalisation",
-              ],
-              ["Phase 2", "Agent", "Tools, planification, actions simples"],
-              [
-                "Phase 3",
-                "Assistant avancé",
-                "Automatisation des tâches, dashboard",
-              ],
-              [
-                "Phase 4",
-                "Jarvis-like",
-                "Voix, contrôle système, anticipation",
-              ],
-            ].map(([phase, title, desc]) => (
-              <div
-                key={phase}
-                className="rounded-2xl border border-zinc-700 bg-zinc-900/70 p-5"
+        <section>
+          <Titre sur="Ce qu'il fait">Trois endroits, un seul Jarvis</Titre>
+          <div className="grid gap-4 md:grid-cols-3">
+            {LIEUX.map((lieu) => (
+              <article
+                key={lieu.titre}
+                className="rounded-2xl border border-zinc-700/70 bg-zinc-900/60 p-6 transition hover:-translate-y-1 hover:border-cyan-400/40"
               >
-                <p className="text-sm font-medium text-cyan-300">{phase}</p>
-                <h3 className="mt-1 text-lg font-semibold text-zinc-100">
-                  {title}
-                </h3>
-                <p className="mt-2 text-sm text-zinc-300">{desc}</p>
-              </div>
+                <h3 className="mb-2 text-xl font-semibold text-zinc-100">{lieu.titre}</h3>
+                <p className="text-zinc-300">{lieu.texte}</p>
+              </article>
             ))}
           </div>
         </section>
 
-        <footer className="mt-auto rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-6 py-5 text-center">
-          <p className="text-lg font-semibold">
-            Jarvis : comprendre, raisonner, agir, évoluer.
+        <section className="grid gap-10 lg:grid-cols-2 lg:items-center">
+          <div>
+            <Titre sur="Sous votre contrôle">Le code décide, pas le modèle</Titre>
+            <p className="mb-6 text-zinc-300">
+              Chaque commande est classée par des règles écrites dans le code. Toute action devient
+              un plan que vous validez.
+            </p>
+            <ul className="space-y-3">
+              {NIVEAUX.map((niveau, i) => (
+                <li
+                  key={niveau.nom}
+                  className="flex flex-col items-start gap-2 rounded-xl bg-zinc-800/70 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+                >
+                  <span className={`rounded-full border px-3 py-1 text-xs font-semibold tracking-wider uppercase ${niveau.couleur}`}>
+                    Niveau {i + 1} · {niveau.nom}
+                  </span>
+                  <span className="text-zinc-200 sm:text-right">{niveau.regle}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-sm text-zinc-400">
+              Chaque action entre dans un journal en ajout seul, chaîné par SHA-256 et vérifié au
+              démarrage. Les clés restent dans le trousseau du système.
+            </p>
+          </div>
+          <Image
+            src="/demo/plan.webp"
+            alt="Un plan en trois étapes, « Action en attente de ta validation », avec les boutons Refuser et Valider"
+            width={1440}
+            height={900}
+            className="rounded-3xl border border-zinc-700/70 shadow-2xl"
+          />
+        </section>
+
+        <section>
+          <Titre sur="L'application">Tout se voit, tout se modifie</Titre>
+          <div className="grid gap-4 md:grid-cols-3">
+            {CAPTURES.map((capture) => (
+              <figure key={capture.src} className="rounded-2xl border border-zinc-700/70 bg-zinc-900/60 p-3">
+                <Image
+                  src={capture.src}
+                  alt={capture.legende}
+                  width={1440}
+                  height={900}
+                  sizes="(min-width: 768px) 33vw, 100vw"
+                  className="rounded-xl"
+                />
+                <figcaption className="mt-3 px-1 text-sm text-zinc-300">{capture.legende}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <Titre sur="L'essayer">Trois commandes</Titre>
+          <p className="mb-6 text-zinc-300">
+            Il faut Ubuntu 24.04 ou plus récent (x86_64, GNOME sous Wayland pour le bureau) et une
+            clé de l&apos;API Meta.{" "}
+            <a href={LIENS.shellDeb} {...externe} className="text-cyan-300 underline-offset-4 hover:underline">
+              Dernière version
+            </a>
+            .
           </p>
+          <ol className="grid gap-4 md:grid-cols-3">
+            {ETAPES.map((etape, i) => (
+              <li key={etape.titre} className="rounded-2xl border border-zinc-700 bg-zinc-900/70 p-5">
+                <p className="text-sm font-medium text-cyan-300">Étape {i + 1}</p>
+                <h3 className="mt-1 text-lg font-semibold text-zinc-100">{etape.titre}</h3>
+                <pre className="mt-3 rounded-lg bg-black/60 px-3 py-2 font-mono text-sm whitespace-pre-wrap break-all text-emerald-300">
+                  <code>{etape.code}</code>
+                </pre>
+                <p className="mt-3 text-sm text-zinc-400">{etape.note}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section>
+          <Titre sur="Les liens">Le code et les preuves</Titre>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {DEPOTS.map((lien) => (
+              <CarteLien key={lien.href} lien={lien} />
+            ))}
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {DOCS.map((lien) => (
+              <CarteLien key={lien.href} lien={lien} />
+            ))}
+          </div>
+        </section>
+
+        <footer className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 px-6 py-5 text-center">
+          <p className="text-lg font-semibold">Comprendre, raisonner, agir, avec votre accord.</p>
           <p className="mt-1 text-sm text-zinc-300">
-            Une version augmentée de l’utilisateur, construite étape par étape.
+            Construit pour le Meta Global AI Developer Hackathon (26 octobre – 4 novembre 2026). Code
+            ouvert sous licence MIT.
           </p>
         </footer>
       </main>
