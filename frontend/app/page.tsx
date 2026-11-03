@@ -205,19 +205,27 @@ export default function Home() {
       </div>
 
       <main className="relative mx-auto flex w-full max-w-6xl flex-col px-6 py-10 md:px-10 lg:px-16">
-        <header className="mb-16 flex items-center justify-between">
+        <header className="mb-16 flex flex-wrap items-center justify-between gap-3">
           <div className="inline-flex items-center gap-3 rounded-full border border-zinc-700/70 bg-zinc-900/70 px-4 py-2 backdrop-blur">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
             <span className="text-sm tracking-wide text-zinc-200">
               JARVIS · Double Numérique Intelligent
             </span>
           </div>
-          <a
-            href="#roadmap"
-            className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-800"
-          >
-            Voir la roadmap
-          </a>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/demo"
+              className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:bg-cyan-300"
+            >
+              Voir la démo
+            </Link>
+            <a
+              href="#roadmap"
+              className="rounded-full border border-zinc-700 px-4 py-2 text-sm text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-800"
+            >
+              Voir la roadmap
+            </a>
+          </div>
         </header>
 
         <section className="mb-20 grid gap-10 lg:grid-cols-2 lg:items-center">
