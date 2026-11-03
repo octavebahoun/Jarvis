@@ -109,7 +109,7 @@ export default function ChatPage() {
     <div className="flex min-h-screen flex-col bg-linear-to-b from-zinc-950 via-zinc-900 to-black text-zinc-100">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-6 py-8">
         <header className="mb-4 flex items-center justify-between">
-          <Link href="/" className="text-sm text-zinc-400 hover:text-zinc-200">
+          <Link href="/projet" className="text-sm text-zinc-400 hover:text-zinc-200">
             ← Retour
           </Link>
           <span className="text-sm tracking-wide text-zinc-300">JARVIS · Chat</span>
